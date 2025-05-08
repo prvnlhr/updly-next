@@ -1,0 +1,173 @@
+
+1. Community Page (`r/community-name`)  
+Layout:  
+- Header: Community name, join button, member count, description.  
+- Tabs:  
+  - Posts (default)  
+  - About (rules, moderators)  
+  - Media (images/videos only)  
+
+Post Creation Flow:  
+- Floating "Create Post" button → Opens modal with options:  
+  - Text Post: Rich text editor (bold, links, lists).  
+  - Image Post: Upload + caption (with preview).  
+  - Video Post: Embed/upload + thumbnail.  
+  - All types allow rich text descriptions.  
+
+Post Display:  
+- Card layout (upvotes, title, author, timestamp, comment count).  
+- Expandable media (images/videos lazy-loaded).  
+
+---
+
+2. Feed Page (Home)  
+Two Sections:  
+1. Top Posts (Top Section)  
+   - Algorithm: Highest upvotes in last 24h (1 post per community).  
+   - Horizontal scrollable cards or stacked list.  
+
+2. Recent Posts (Bottom Section)  
+   - Chronological feed (newest first).  
+   - Infinite scroll with pagination.  
+
+Optional Filters:  
+- Hot, New, Top (toggle above feed).  
+
+---
+
+3. Sidebar  
+Collapsible Sections:  
+1. Following Communities  
+   - Icons + names (max 5, "See All" expands).  
+2. Created Communities  
+   - Only visible if user is a mod.  
+3. Recently Visited  
+   - Last 3-5 communities (time-based).  
+
+Extra:  
+- "Discover Communities" button (links to recommendations).  
+
+---
+
+Key UI Components to Build:  
+1. Post Card (reusable for feed/community pages):  
+   - Upvote/downvote buttons.  
+   - Title, author, media thumbnail.  
+   - "Comments" link.  
+
+2. Rich Text Editor (for posts/comments):  
+   - Toolbar: Bold, italics, links, lists.  
+   - Markdown support (optional).  
+
+3. Modals:  
+   - Post creation.  
+   - Media upload preview.  
+
+---
+
+Optimizations for MVP:  
+- Prioritize Desktop First (mobile later).  
+- Lazy-Load Images/Video (improve performance).  
+- Minimal Mod Tools (delete posts, ban users – hide in MVP if needed).  
+
+---
+
+Example User Flow:  
+1. User lands on Home Feed → Sees top/recent posts.  
+2. Clicks r/programming → Community Page → Creates a text post.  
+3. Post appears in feed → Others upvote/comment.  
+
+
+// Prisma models,
+
+// schema.prisma
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model User {
+  id        String   @id @default(uuid())
+  username  String   @unique
+  createdAt DateTime @default(now())
+  
+  // Relationships
+  posts     Post[]
+  comments  Comment[]
+  votes     Vote[]
+}
+
+model Community {
+  id          String   @id @default(uuid())
+  name        String   @unique (e.g. "programming")
+  displayName String   (e.g. "r/Programming")
+  description String?
+  createdAt   DateTime @default(now())
+  
+  // Relationships
+  posts      Post[]
+}
+
+model Post {
+  id          String     @id @default(uuid())
+  title       String
+  content     String?    // Rich text content (JSON/markdown)
+  mediaUrl    String?    // For image/video posts
+  type        PostType   @default(TEXT)
+  upvotes     Int        @default(0)
+  createdAt   DateTime   @default(now())
+  
+  // Relationships
+  authorId    String
+  author      User       @relation(fields: [authorId], references: [id])
+  communityId String
+  community   Community  @relation(fields: [communityId], references: [id])
+  comments    Comment[]
+  
+  @@index([communityId, createdAt]) // For recent posts
+  @@index([upvotes])               // For top posts
+}
+
+enum PostType {
+  TEXT
+  IMAGE
+  VIDEO
+}
+
+model Comment {
+  id        String   @id @default(uuid())
+  content   String
+  createdAt DateTime @default(now())
+  
+  // Relationships
+  authorId  String
+  author    User     @relation(fields: [authorId], references: [id])
+  postId    String
+  post      Post     @relation(fields: [postId], references: [id])
+}
+
+model Vote {
+  id        String   @id @default(uuid())
+  isUpvote  Boolean  // true=upvote, false=downvote
+  
+  // Relationships
+  userId    String
+  user      User     @relation(fields: [userId], references: [id])
+  postId    String
+  post      Post     @relation(fields: [postId], references: [id])
+  
+  @@unique([userId, postId]) // 1 vote per user per post
+}
+
+
+
+// Frontend routing
+
+
+
+/feed
+/r/community-name
