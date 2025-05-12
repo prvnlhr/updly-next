@@ -1,19 +1,13 @@
 import React from "react";
-import RecentPosts from "./RecentPosts";
 import MainFeed from "./MainFeed";
-import NavigationSidebar from "./NavigationSidebar";
+import CreateCommunityModal from "@/components/Modal/CreateCommunityModal";
 
-const FeedPage = () => {
+const FeedPage = async ({ createCommunity }: { createCommunity: boolean }) => {
   return (
-    <div className="w-full h-[100%] flex flex-col">
-      <div className="w-full h-full flex">
-        {/* Left Sidebar */}
-        <NavigationSidebar />
-        {/* Main Content */}
-        <MainFeed />
-        {/* Right Sidebar */}
-        <RecentPosts />
-      </div>
+    <div className="w-full h-[100%] flex">
+      {createCommunity && <CreateCommunityModal />}
+      <MainFeed />
+      <div className="w-[25%] h-[100%]"></div>
     </div>
   );
 };

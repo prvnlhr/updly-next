@@ -1,4 +1,6 @@
 import React from "react";
+import NavigationSidebar from "../Pages/Feed/NavigationSidebar";
+import HeaderBar from "./HeaderBar";
 
 const HomeLayout = ({
   children,
@@ -7,8 +9,11 @@ const HomeLayout = ({
 }>) => {
   return (
     <div className="w-full h-screen flex flex-col items-center justify-center">
-      <div className="w-[100%] h-[50px] border-b"></div>
-      <div className="w-[100%] h-[calc(100%-50px)]">{children}</div>
+      <HeaderBar />
+      <div className="w-[100%] h-[calc(100%-60px)] flex">
+        <NavigationSidebar />
+        <div className="flex-1 h-[100%] flex min-w-0">{children}</div>
+      </div>
     </div>
   );
 };

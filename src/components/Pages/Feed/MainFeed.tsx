@@ -78,10 +78,9 @@ const samplePosts = [
 
 const MainFeed = () => {
   return (
-    <div className="flex-1 h-full border-r p-2 overflow-hidden">
+    <div className="flex-1 h-full border-r border-[#212121] p-2 overflow-hidden">
       <div className="w-full h-full overflow-y-scroll hide-scrollbar px-[10px]">
-        {/* Horizontal scroll section remains unchanged */}
-        <div className="w-full h-[250px] flex overflow-x-auto whitespace-nowrap hide-scrollbar space-x-[20px] my-[20px]">
+        <div className="w-[100%] max-w-[100%] h-[250px] flex overflow-x-scroll whitespace-nowrap hide-scrollbar space-x-[20px] my-[20px] min-w-0">
           {samplePosts.map((post, i) => (
             <div
               key={i}
@@ -109,7 +108,6 @@ const MainFeed = () => {
                   {post.desc}
                 </p>
               </div>
-              {/* community-name */}
               <div className="w-[100%] h-[60px] flex items-center px-[5px] py-[5px] z-[3]">
                 <div className="h-[100%] aspect-square rounded-full border border-white/10"></div>
                 <div className="flex-1 h-[100%] flex items-center px-[10px]">
@@ -126,11 +124,11 @@ const MainFeed = () => {
         {redditPosts.map((post, pId) => (
           <div
             key={pId}
-            className="w-[100%] h-[auto] border mt-[30px] rounded-[30px] p-[10px]"
+            className="w-[100%] h-[auto] border border-[#212121] mt-[30px] rounded-[30px] p-[10px]"
           >
             <div className="w-[100%] h-[auto] flex flex-col">
               <div className="w-[100%] h-[40px] flex">
-                <div className="h-[100%] aspect-square border rounded-full"></div>
+                <div className="h-[100%] aspect-square border border-[#212121] rounded-full"></div>
                 <div className="h-[100%] flex-1 flex items-center px-[10px]">
                   <p className="text-xs">{post.community}</p>
                   <Icon

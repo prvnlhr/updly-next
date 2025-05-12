@@ -22,7 +22,6 @@
   --font-extrabold: 800;
   --font-black: 900;
 }
-
 body {
   color: var(--font-primary);
   background: var(--background);
@@ -30,9 +29,6 @@ body {
   max-width: 100vw;
 }
 
-* {
-  border-color: #212121;
-}
 :focus {
   outline: none;
 }
@@ -98,4 +94,38 @@ input:-webkit-autofill:active {
   backdrop-filter: blur(16px) saturate(180%);
   -webkit-backdrop-filter: blur(16px) saturate(180%);
   background-color: rgba(17, 25, 40, 0.75);
+}
+
+.ProseMirror {
+  padding: 10px !important;
+}
+.reactjs-tiptap-editor {
+  border: none !important;
+}
+.richtext-overflow-hidden {
+  border: none !important;
+}
+
+.richtext-flex {
+  color: white;
+}
+
+.rich-text-editor {
+  border-color: red !important;
+  width: 100% !important;
+  height: 100%;
+}
+
+.reactjs-tiptap-editor {
+  background: transparent !important;
+}
+.richtext-bg-background {
+  background-color: transparent !important;
+}
+.richtext-outline {
+  outline: #212121;
+}
+
+.richtext-rounded-\[0\.5rem\] {
+  border-radius: 20px !important;
 }
