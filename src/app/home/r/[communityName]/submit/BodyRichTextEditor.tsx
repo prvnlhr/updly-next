@@ -1,5 +1,5 @@
 "use client";
-import RichTextEditor, { UseEditorOptions } from "reactjs-tiptap-editor";
+import RichTextEditor from "reactjs-tiptap-editor";
 import { BaseKit } from "reactjs-tiptap-editor";
 import { BulletList } from "reactjs-tiptap-editor/bulletlist";
 import { Italic } from "reactjs-tiptap-editor/italic";
@@ -55,15 +55,13 @@ const extensions = [
   Table,
 ];
 
-const customOptions: UseEditorOptions = {
-  onUpdate: ({ editor }) => console.log("Content updated:", editor.getText()),
-  onSelectionUpdate: ({ editor }) =>
-    console.log("Selection updated:", editor.getText()),
-  onFocus: () => console.log("Editor focused"),
-  onBlur: () => console.log("Editor blurred"),
-  editable: true,
-  autofocus: "start",
-};
+// const customOptions: UseEditorOptions = {
+//   onUpdate: ({ editor }) => console.log("Content updated:", editor.getText()),
+//   onSelectionUpdate: ({ editor }) =>
+//     console.log("Selection updated:", editor.getText()),
+//   editable: true,
+//   autofocus: "start",
+// };
 
 export const BodyRichTextEditor = ({
   onChange,
@@ -80,7 +78,7 @@ export const BodyRichTextEditor = ({
         content={value}
         onChangeContent={onChange}
         extensions={extensions}
-        useEditorOptions={customOptions}
+        // useEditorOptions={customOptions}
         hideBubble={true}
       />
     </div>

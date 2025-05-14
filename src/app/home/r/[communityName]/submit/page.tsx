@@ -1,94 +1,140 @@
 "use client";
-import { useForm } from "react-hook-form";
+import { useForm, FieldErrors } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
 import { Icon } from "@iconify/react/dist/iconify.js";
 import Link from "next/link";
-import { useSearchParams } from "next/navigation";
+import { useSearchParams, useRouter } from "next/navigation";
 import React, { useState } from "react";
 import BodyRichTextEditor from "./BodyRichTextEditor";
 import Image from "next/image";
+import { uploadMediaAndCreatePost } from "@/services/postServices";
 
 const isFileList = (value: unknown): value is FileList => {
   return typeof window !== "undefined" && value instanceof FileList;
 };
 
-// Define Zod schema based on post type
+// Define separate schemas for each post type
 const textPostSchema = z.object({
+  type: z.literal("text"),
   title: z.string().min(1, "Title is required"),
   content: z.string().min(1, "Content is required"),
 });
 
-const imagePostSchema = textPostSchema.extend({
+const imagePostSchema = z.object({
+  type: z.literal("image"),
+  title: z.string().min(1, "Title is required"),
   media: z
-    .any()
+    .unknown()
     .refine((val) => isFileList(val) && val.length > 0, "Media is required")
     .refine((val) => {
       if (!isFileList(val)) return false;
       const file = val[0];
       return file.type.startsWith("image/") || file.type.startsWith("video/");
     }, "Only images and videos are allowed"),
+  content: z.string().optional(),
 });
 
-const linkPostSchema = textPostSchema.extend({
+const linkPostSchema = z.object({
+  type: z.literal("link"),
+  title: z.string().min(1, "Title is required"),
   url: z.string().url("Invalid URL").min(1, "URL is required"),
 });
 
-type FormValues = {
-  title: string;
-  content: string;
-  media?: FileList;
-  url?: string;
-};
+// Combined schema with discriminated union
+const postSchema = z.discriminatedUnion("type", [
+  textPostSchema,
+  imagePostSchema,
+  linkPostSchema,
+]);
+
+type FormValues = z.infer<typeof postSchema>;
 
 const CreatePostPage = () => {
+  const router = useRouter();
   const searchParams = useSearchParams();
   const postType = searchParams.get("type") || "text";
   const [preview, setPreview] = useState<string | null>(null);
-
-  // Determine which schema to use based on post type
-  const getSchema = () => {
-    switch (postType) {
-      case "image":
-        return imagePostSchema;
-      case "link":
-        return linkPostSchema;
-      default:
-        return textPostSchema;
-    }
-  };
+  const [error, setError] = useState<string | null>(null);
 
   const {
     register,
     handleSubmit,
-    formState: { errors },
+    formState: { errors, isSubmitting },
     watch,
     setValue,
+    reset,
   } = useForm<FormValues>({
-    resolver: zodResolver(getSchema()),
+    resolver: zodResolver(postSchema),
     defaultValues: {
+      type: postType as "text" | "image" | "link",
       title: "",
       content: "",
-      url: "",
     },
   });
 
-  const onSubmit = (data: FormValues) => {
-    console.log("Form submitted:", data);
-    // Handle form submission
+  const onSubmit = async (data: FormValues) => {
+    try {
+      const communityId = "8e99d5e8-0316-48e9-97ce-d9e41b581dbb";
+      const userId = "85d88c8a-e929-41d1-af44-795bdd5c7167";
+
+      await uploadMediaAndCreatePost(
+        {
+          title: data.title,
+          content: data.type === "link" ? "" : data.content || "",
+          media: data.type === "image" ? data.media : undefined,
+          url: data.type === "link" ? data.url : undefined,
+        },
+        communityId,
+        userId
+      );
+
+      reset();
+      router.push(`/r/${communityId}`);
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "Failed to create post");
+    }
   };
 
-  // Handle file input change for image preview
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0];
-    if (file) {
+    const files = e.target.files;
+    if (files && files[0]) {
+      const file = files[0];
       const reader = new FileReader();
       reader.onloadend = () => {
         setPreview(reader.result as string);
       };
       reader.readAsDataURL(file);
+      setValue("media", files);
     }
-    setValue("media", e.target.files as FileList);
+  };
+
+  const hasMediaError = (
+    errors: FieldErrors<FormValues>
+  ): errors is FieldErrors<FormValues> & { media: { message: string } } => {
+    return (
+      "media" in errors &&
+      !!errors.media &&
+      typeof errors.media.message === "string"
+    );
+  };
+
+  const hasContentError = (
+    errors: FieldErrors<FormValues>
+  ): errors is FieldErrors<FormValues> & { content: { message: string } } => {
+    return (
+      "content" in errors &&
+      !!errors.content &&
+      typeof errors.content.message === "string"
+    );
+  };
+
+  const hasUrlError = (
+    errors: FieldErrors<FormValues>
+  ): errors is FieldErrors<FormValues> & { url: { message: string } } => {
+    return (
+      "url" in errors && !!errors.url && typeof errors.url.message === "string"
+    );
   };
 
   return (
@@ -102,7 +148,7 @@ const CreatePostPage = () => {
         </div>
 
         <div className="w-[100%] h-[calc(100%-50px)] flex flex-col">
-          {/* Community selector  */}
+          {/* Community selector */}
           <div className="w-[100%] h-[60px] min-h-[60px] flex items-center">
             <div className="w-auto h-[80%] flex border border-[#212121] rounded-full">
               <div className="h-[100%] aspect-square flex items-center justify-center">
@@ -175,13 +221,13 @@ const CreatePostPage = () => {
             {/* Conditional fields based on post type */}
             {postType === "image" && (
               <div className="w-[100%] h-auto my-[20px]">
-                <div className="w-[100%] h-[200px] border border-[#212121] rounded-[20px] flex items-center justify-center">
+                <div className="relative w-[100%] h-[200px] border border-[#212121] rounded-[20px] flex items-center justify-center overflow-hidden">
                   {preview ? (
                     <Image
                       fill={true}
                       src={preview}
                       alt="Preview"
-                      className="max-h-full max-w-full object-contain"
+                      className="max-h-full max-w-full object-cover"
                     />
                   ) : (
                     <div className="text-center">
@@ -204,21 +250,21 @@ const CreatePostPage = () => {
                 >
                   Upload Media
                 </label>
-                {errors.media && (
+                {hasMediaError(errors) && (
                   <p className="text-xs text-red-500">{errors.media.message}</p>
                 )}
               </div>
             )}
 
             {postType === "link" && (
-              <div className="w-[100%] h-[100px]  my-[10px]">
+              <div className="w-[100%] h-[100px] my-[10px]">
                 <input
                   {...register("url")}
                   className="w-[100%] h-[calc(100%-30px)] rounded-[20px] px-[20px] border border-[#212121]"
                   placeholder="URL *"
                 />
                 <div className="w-[100%] h-[30px] flex items-center px-[10px]">
-                  {errors.url && (
+                  {hasUrlError(errors) && (
                     <p className="text-xs text-red-500">{errors.url.message}</p>
                   )}
                 </div>
@@ -226,27 +272,37 @@ const CreatePostPage = () => {
             )}
 
             {/* Rich text editor */}
-            <div className="w-[100%] h-[auto] flex flex-col p-[0px] mt-[20px]">
-              <BodyRichTextEditor
-                onChange={(html) => setValue("content", html)}
-                value={watch("content") || ""}
-              />
-              <div className="w-[100%] h-[30px] flex items-center px-[10px]">
-                {errors.content && (
-                  <p className="text-xs text-red-500">
-                    {errors.content.message}
-                  </p>
-                )}
+            {(postType === "text" || postType === "image") && (
+              <div className="w-[100%] h-[auto] flex flex-col p-[0px] mt-[20px]">
+                <BodyRichTextEditor
+                  onChange={(html: string) => setValue("content", html)}
+                  value={watch("content") || ""}
+                />
+                <div className="w-[100%] h-[30px] flex items-center px-[10px]">
+                  {hasContentError(errors) && (
+                    <p className="text-xs text-red-500">
+                      {errors.content.message}
+                    </p>
+                  )}
+                </div>
               </div>
-            </div>
+            )}
+
+            {/* Error message */}
+            {error && (
+              <div className="w-[100%] h-[30px] flex items-center px-[10px]">
+                <p className="text-xs text-red-500">{error}</p>
+              </div>
+            )}
 
             {/* Submit button */}
             <div className="w-[100%] h-[60px] flex items-center justify-end mt-[20px]">
               <button
                 type="submit"
+                disabled={isSubmitting}
                 className="w-[120px] h-[40px] bg-blue-500 text-white rounded-full flex items-center justify-center"
               >
-                Post
+                {isSubmitting ? "Creating..." : "Post"}
               </button>
             </div>
           </div>

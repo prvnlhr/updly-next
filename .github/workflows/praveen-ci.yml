@@ -1,0 +1,38 @@
+name: Praveen's CI Pipeline
+
+on:
+  push:
+    branches:
+      - "praveen"
+  pull_request:
+    branches:
+      - "praveen"
+
+jobs:
+  checks:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: "npm"
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Run ESLint
+        run: npm run lint
+
+      - name: Build project
+        run: npm run build
+
+      - name: Verify production start
+        run: |
+          npm run start -- --port 3000 &
+          PID=$!
+          sleep 10
+          curl http://localhost:3000 || echo "Server failed to start"
+          kill $PID

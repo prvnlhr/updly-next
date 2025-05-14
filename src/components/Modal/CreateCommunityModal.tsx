@@ -5,6 +5,8 @@ import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
 import { useRouter, useSearchParams } from "next/navigation";
+import { createCommunity } from "@/services/communityServices";
+import Image from "next/image";
 
 // Zod schema for form validation
 const communitySchema = z.object({
@@ -146,7 +148,8 @@ const CreateCommunityModal = () => {
     register,
     handleSubmit,
     setValue,
-    formState: { errors },
+
+    formState: { errors, isSubmitting },
   } = useForm<CommunityFormData>({
     resolver: zodResolver(communitySchema),
     defaultValues: {
@@ -191,9 +194,16 @@ const CreateCommunityModal = () => {
     setValue("topics", newTopics);
   };
 
-  const onSubmit = (data: CommunityFormData) => {
+  const onSubmit = async (data: CommunityFormData) => {
     console.log("Form submitted:", data);
-    // Handle form submission logic here
+    try {
+      await createCommunity({
+        ...data,
+        userId: "85d88c8a-e929-41d1-af44-795bdd5c7167",
+      });
+    } catch (err) {
+      console.log(err);
+    }
   };
 
   const onClose = () => {
@@ -274,10 +284,11 @@ const CreateCommunityModal = () => {
             <div className="relative w-[100%] h-[200px] min-h-[200px] flex flex-col justify-end rounded-[20px] z-1 mb-[20px]">
               <div className="absolute top-0 left-0 w-[100%] h-[140px] border border-[#212121] rounded-[20px] z-2 overflow-hidden">
                 {bannerPreview ? (
-                  <img
+                  <Image
                     src={bannerPreview}
                     alt="Banner preview"
                     className="w-full h-full object-cover"
+                    fill={true}
                   />
                 ) : (
                   <div className="w-full h-full bg-[#212121] flex items-center justify-center">
@@ -315,10 +326,11 @@ const CreateCommunityModal = () => {
                     className="hidden"
                   />
                   {iconPreview ? (
-                    <img
+                    <Image
                       src={iconPreview}
                       alt="Icon preview"
                       className="w-full h-full object-cover"
+                      fill={true}
                     />
                   ) : (
                     <div className="w-full h-full flex items-center justify-center">
@@ -435,7 +447,9 @@ const CreateCommunityModal = () => {
               type="submit"
               className="w-[auto] h-[40px] px-[20px] bg-blue-500 text-white rounded-full flex items-center justify-center hover:bg-blue-600"
             >
-              <p className="text-sm">Create a community</p>
+              <p className="text-sm">
+                {isSubmitting ? "Creating..." : "Create a community"}
+              </p>
             </button>
           </div>
         </form>
