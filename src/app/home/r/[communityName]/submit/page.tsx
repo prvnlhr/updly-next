@@ -4,7 +4,7 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
 import { Icon } from "@iconify/react/dist/iconify.js";
 import Link from "next/link";
-import { useSearchParams, useRouter } from "next/navigation";
+import { useSearchParams } from "next/navigation";
 import React, { useState } from "react";
 import BodyRichTextEditor from "./BodyRichTextEditor";
 import Image from "next/image";
@@ -26,12 +26,7 @@ const imagePostSchema = z.object({
   title: z.string().min(1, "Title is required"),
   media: z
     .unknown()
-    .refine((val) => isFileList(val) && val.length > 0, "Media is required")
-    .refine((val) => {
-      if (!isFileList(val)) return false;
-      const file = val[0];
-      return file.type.startsWith("image/") || file.type.startsWith("video/");
-    }, "Only images and videos are allowed"),
+    .refine((val) => isFileList(val) && val.length > 0, "Media is required"),
   content: z.string().optional(),
 });
 
@@ -51,7 +46,6 @@ const postSchema = z.discriminatedUnion("type", [
 type FormValues = z.infer<typeof postSchema>;
 
 const CreatePostPage = () => {
-  const router = useRouter();
   const searchParams = useSearchParams();
   const postType = searchParams.get("type") || "text";
   const [preview, setPreview] = useState<string | null>(null);
@@ -82,15 +76,13 @@ const CreatePostPage = () => {
         {
           title: data.title,
           content: data.type === "link" ? "" : data.content || "",
-          media: data.type === "image" ? data.media : undefined,
+          media: data.type === "image" ? (data.media as FileList) : undefined, // Explicit cast here
           url: data.type === "link" ? data.url : undefined,
         },
         communityId,
         userId
       );
-
       reset();
-      router.push(`/r/${communityId}`);
     } catch (err) {
       setError(err instanceof Error ? err.message : "Failed to create post");
     }
@@ -248,7 +240,7 @@ const CreatePostPage = () => {
                   htmlFor="media-upload"
                   className="block mt-[10px] text-[0.9rem] text-blue-500 cursor-pointer"
                 >
-                  Upload Media
+                  Upload Media *
                 </label>
                 {hasMediaError(errors) && (
                   <p className="text-xs text-red-500">{errors.media.message}</p>
