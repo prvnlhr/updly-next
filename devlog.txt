@@ -171,3 +171,8 @@ model Vote {
 
 /feed
 /r/community-name
+
+
+
+/api/communities/POST
+/api/communities/

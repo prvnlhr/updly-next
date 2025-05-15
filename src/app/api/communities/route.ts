@@ -15,7 +15,6 @@ interface CreateCommunityRequest {
 export async function POST(req: Request) {
   try {
     const body: CreateCommunityRequest = await req.json();
-    console.log("body:", body);
 
     // Validate required fields
     if (!body.name || !body.creatorId) {

@@ -6,6 +6,7 @@ const UpdlyHome = ({
 }: Readonly<{
   children: React.ReactNode;
 }>) => {
+  
   return <HomeLayout>{children}</HomeLayout>;
 };
 

@@ -69,8 +69,9 @@ const CreatePostPage = () => {
 
   const onSubmit = async (data: FormValues) => {
     try {
-      const communityId = "8e99d5e8-0316-48e9-97ce-d9e41b581dbb";
-      const userId = "85d88c8a-e929-41d1-af44-795bdd5c7167";
+      const communityId = "c003f92f-f023-4c92-9d52-695e03e239fc";
+      const userId = "85d88c8a-e929-41d1-af44-795bdd5c7167"; // aumnom
+      // const userId = "613be41a-4ef1-43b9-af58-11ce6894528b"; // anumnom_2
 
       await uploadMediaAndCreatePost(
         {
