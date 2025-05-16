@@ -7,15 +7,14 @@ interface CreatePostRequest {
   content?: string;
   communityId: string;
   authorId: string;
-  type: "TEXT" | "IMAGE" | "VIDEO";
+  type: "TEXT" | "IMAGE" | "VIDEO" | "LINK";
   mediaUrl?: string;
+  url?: string;
 }
 
 export async function POST(request: NextRequest) {
   try {
     const body: CreatePostRequest = await request.json();
-
-    // Validate required fields
     if (!body.title || !body.communityId || !body.authorId) {
       return createResponse(
         400,
@@ -25,16 +24,38 @@ export async function POST(request: NextRequest) {
     }
 
     // Validate post type specific requirements
-    if (body.type === "TEXT" && !body.content) {
-      return createResponse(400, null, "Content is required for text posts");
-    }
-
-    if ((body.type === "IMAGE" || body.type === "VIDEO") && !body.mediaUrl) {
-      return createResponse(
-        400,
-        null,
-        "Media URL is required for image/video posts"
-      );
+    switch (body.type) {
+      case "TEXT":
+        if (!body.content) {
+          return createResponse(
+            400,
+            null,
+            "Content is required for text posts"
+          );
+        }
+        break;
+      case "IMAGE":
+      case "VIDEO":
+        if (!body.mediaUrl) {
+          return createResponse(
+            400,
+            null,
+            "Media URL is required for image/video posts"
+          );
+        }
+        break;
+      case "LINK":
+        if (!body.url) {
+          return createResponse(400, null, "URL is required for link posts");
+        }
+        try {
+          new URL(body.url);
+        } catch {
+          return createResponse(400, null, "Invalid URL format");
+        }
+        break;
+      default:
+        return createResponse(400, null, "Invalid post type");
     }
 
     // Verify user is a member of the community
@@ -55,18 +76,21 @@ export async function POST(request: NextRequest) {
       );
     }
 
+    // Prepare post data
+    const postData = {
+      title: body.title,
+      content: body.content || null,
+      type: body.type,
+      mediaUrl: body.mediaUrl || null,
+      url: body.type === "LINK" ? body.url : null,
+      authorId: body.authorId,
+      communityId: body.communityId,
+    };
+
     // Create the post within a transaction
     const result = await prisma.$transaction(async (tx) => {
-      // 1. Create the post
       const post = await tx.post.create({
-        data: {
-          title: body.title,
-          content: body.content,
-          type: body.type,
-          mediaUrl: body.mediaUrl,
-          authorId: body.authorId,
-          communityId: body.communityId,
-        },
+        data: postData,
         include: {
           author: {
             select: {
@@ -84,7 +108,6 @@ export async function POST(request: NextRequest) {
         },
       });
 
-      // 2. Create an automatic upvote from the author
       await tx.vote.create({
         data: {
           isUpvote: true,
@@ -93,7 +116,6 @@ export async function POST(request: NextRequest) {
         },
       });
 
-      // 3. Update post's upvote count
       await tx.post.update({
         where: { id: post.id },
         data: {

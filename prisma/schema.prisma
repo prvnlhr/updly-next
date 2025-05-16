@@ -47,6 +47,7 @@ model Post {
   title     String
   content   String?
   mediaUrl  String?
+  url       String? // Add this line for LINK posts
   type      PostType @default(TEXT)
   upvotes   Int      @default(0)
   createdAt DateTime @default(now())
@@ -67,6 +68,7 @@ enum PostType {
   TEXT
   IMAGE
   VIDEO
+  LINK
 }
 
 model Comment {

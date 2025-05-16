@@ -1,11 +1,10 @@
-import { FormValues } from "@/types/postTypes";
 import { uploadToCloudinary } from "@/utils/cloudinaryConfig";
 
 const BASE_URL = process.env.NEXT_PUBLIC_VERCEL_URL || "http://localhost:3000";
 
-interface CreatePostParams {
+interface PostCreationData {
   title: string;
-  content: string;
+  content?: string;
   communityId: string;
   authorId: string;
   type: "TEXT" | "IMAGE" | "VIDEO" | "LINK";
@@ -13,7 +12,17 @@ interface CreatePostParams {
   url?: string;
 }
 
-export async function createPost(data: CreatePostParams) {
+interface PostSubmissionData {
+  title: string;
+  type: "TEXT" | "IMAGE" | "VIDEO" | "LINK";
+  communityId: string;
+  userId: string;
+  content?: string;
+  media?: FileList;
+  url?: string;
+}
+
+export async function createPost(data: PostCreationData) {
   try {
     const response = await fetch(`${BASE_URL}/api/posts`, {
       method: "POST",
@@ -38,36 +47,45 @@ export async function createPost(data: CreatePostParams) {
 }
 
 export async function uploadMediaAndCreatePost(
-  formData: FormValues,
+  formData: PostSubmissionData,
   communityId: string,
   userId: string
 ) {
   try {
     let mediaUrl: string | undefined;
-    let postType: "TEXT" | "IMAGE" | "VIDEO" | "LINK" = "TEXT";
+    let postType = formData.type;
 
     // Handle media upload if present
     if (formData.media && formData.media.length > 0) {
       const file = formData.media[0];
+
+      // Validate file type
+      if (!file.type.match(/image\/*|video\/*/)) {
+        throw new Error("Only image or video files are allowed");
+      }
+
       const result = await uploadToCloudinary(file);
       mediaUrl = result.secure_url;
       postType = file.type.startsWith("image") ? "IMAGE" : "VIDEO";
     }
 
     // Handle link posts
-    if (formData.url) {
+    if (formData.type === "LINK" && formData.url) {
       postType = "LINK";
     }
 
-    return await createPost({
+    // Prepare the final post data
+    const postCreationData: PostCreationData = {
       title: formData.title,
-      content: formData.content,
+      content: formData.content || "",
       communityId,
       authorId: userId,
       type: postType,
       mediaUrl,
       url: formData.url,
-    });
+    };
+
+    return await createPost(postCreationData);
   } catch (error) {
     console.error("Error in uploadMediaAndCreatePost:", error);
     throw error;
