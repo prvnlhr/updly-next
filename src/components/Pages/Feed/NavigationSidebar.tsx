@@ -6,6 +6,7 @@ import Image from "next/image";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import React from "react";
+import { useSession } from "next-auth/react";
 
 interface NavigationSidebarProps {
   sidebarData: UserCommunitiesResponse;
@@ -13,12 +14,14 @@ interface NavigationSidebarProps {
 const NavigationSidebar: React.FC<NavigationSidebarProps> = ({
   sidebarData,
 }) => {
+  const { data: session } = useSession();
+  const user = session?.user;
   const { createdCommunities, joinedCommunities } = sidebarData;
   const router = useRouter();
   const { openAuthModal } = useModal();
 
   const handleCreateCommunity = () => {
-    const userId = undefined;
+    const userId = user?.id;
     if (!userId) {
       openAuthModal();
       return;

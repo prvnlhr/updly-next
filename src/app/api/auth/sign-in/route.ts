@@ -12,8 +12,8 @@ const AuthMessages = {
 } as const;
 
 const signInSchema = z.object({
-  login: z.string().min(1, "Email or username is required"),
-  password: z.string().min(6, "Password must be at least 6 characters"),
+  email: z.string().email(),
+  password: z.string().min(6),
 });
 
 export async function POST(request: NextRequest) {
@@ -30,15 +30,13 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    const { login, password } = parsed.data;
+    const { email, password } = parsed.data;
+    console.log(" email:", email);
+    console.log(" password:", password);
 
     // Find user by email or username
-    const user = await prisma.user.findFirst({
-      where: {
-        OR: [{ email: login }, { username: login }],
-      },
-    });
-
+    const user = await prisma.user.findUnique({ where: { email } });
+    console.log(" user:", user);
     if (!user) {
       return createResponse(401, null, AuthMessages.USER_NOT_FOUND);
     }

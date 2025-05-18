@@ -1,21 +1,27 @@
-"use client";
 import React from "react";
 import { Oval } from "react-loader-spinner";
+
 interface LoadingSpinnerProps {
-  ringColor?: string;
+  color?: string;
 }
-const LoadingSpinner: React.FC<LoadingSpinnerProps> = ({ ringColor }) => {
+const LoadingSpinner: React.FC<LoadingSpinnerProps> = ({ color }) => {
   return (
-    <div className="w-[100%] h-[100%] flex items-center justify-center">
-      <Oval
-        visible={true}
-        color={ringColor || "white"}
-        secondaryColor="transparent"
-        strokeWidth="3"
-        ariaLabel="oval-loading"
-        wrapperStyle={{}}
-        wrapperClass="w-[100%] h-[100%] flex items-center justify-center"
-      />
+    <div className="w-full aspect-square flex items-center justify-center">
+      <div className="w-[80%] h-[80%] flex items-center justify-center">
+        <Oval
+          visible={true}
+          height="100%"
+          width="100%"
+          color={color || "white"}
+          secondaryColor="transparent"
+          strokeWidth="3"
+          ariaLabel="oval-loading"
+          wrapperStyle={{
+            maxWidth: "100%",
+            maxHeight: "100%",
+          }}
+        />
+      </div>
     </div>
   );
 };

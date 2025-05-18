@@ -3,7 +3,8 @@ import localFont from "next/font/local";
 import "./globals.css";
 import { ModalProvider } from "@/context/ModalContext";
 import AuthModal from "@/components/Modal/AuthModal";
-import { ClerkProvider } from "@clerk/nextjs";
+import { SessionProvider } from "next-auth/react";
+
 const lufga = localFont({
   src: [
     {
@@ -112,7 +113,7 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   return (
-    <ClerkProvider>
+    <SessionProvider>
       <ModalProvider>
         <html lang="en">
           <body className={`${lufga.variable} antialiased`}>
@@ -121,6 +122,6 @@ export default function RootLayout({
           </body>
         </html>
       </ModalProvider>
-    </ClerkProvider>
+    </SessionProvider>
   );
 }

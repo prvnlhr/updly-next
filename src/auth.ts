@@ -46,6 +46,7 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
 
         // Validate credentials
         const parsedCredentials = signInSchema.safeParse(credentials);
+        console.log(" parsedCredentials:", parsedCredentials);
         if (!parsedCredentials.success) {
           const errorMessage = parsedCredentials.error.issues
             .map((issue) => issue.message)

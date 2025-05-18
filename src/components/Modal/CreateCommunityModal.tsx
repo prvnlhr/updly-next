@@ -7,6 +7,7 @@ import { z } from "zod";
 import { useRouter, useSearchParams } from "next/navigation";
 import { createCommunity } from "@/services/user/communityServices";
 import Image from "next/image";
+import { useSession } from "next-auth/react";
 
 // Zod schema for form validation
 const communitySchema = z.object({
@@ -137,6 +138,8 @@ const categories = [
 
 const CreateCommunityModal = () => {
   const router = useRouter();
+  const { data: session } = useSession();
+  const user = session?.user;
   const searchParams = useSearchParams();
   const [selectedTopics, setSelectedTopics] = useState<string[]>([]);
   const [iconPreview, setIconPreview] = useState<string | null>(null);
@@ -199,7 +202,7 @@ const CreateCommunityModal = () => {
     try {
       await createCommunity({
         ...data,
-        userId: "85d88c8a-e929-41d1-af44-795bdd5c7167",
+        userId: user.id,
       });
     } catch (err) {
       console.log(err);

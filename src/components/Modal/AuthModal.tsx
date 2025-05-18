@@ -7,6 +7,7 @@ import { useForm } from "react-hook-form";
 import { z } from "zod";
 import { signUpUser } from "@/services/auth/authServices";
 import { authenticate } from "@/actions/auth/authenticate";
+import { useSession } from "next-auth/react";
 
 type AuthMessage = {
   message: string;
@@ -36,8 +37,10 @@ type SignInFormData = z.infer<typeof signInSchema>;
 type FormMode = "signin" | "signup";
 
 const AuthModal = () => {
+  const { update } = useSession();
+
   const { showAuthModal, closeAuthModal } = useModal();
-  const [mode, setMode] = React.useState<FormMode>("signup");
+  const [mode, setMode] = React.useState<FormMode>("signin");
   const [authMessage, setAuthMessage] = React.useState<AuthMessage | null>(
     null
   );
@@ -71,11 +74,27 @@ const AuthModal = () => {
           type: response.success ? "success" : "error",
         });
       } else if (mode === "signin") {
-        const formData = new FormData();
-        formData.append("login", data.email);
-        formData.append("password", data.password);
-        const result = await authenticate(formData);
+        const result = await authenticate({
+          email: data.email,
+          password: data.password,
+        });
         console.log(" result:", result);
+
+        if (result.error) {
+          setAuthMessage({
+            message: result.error,
+            type: "error",
+          });
+        } else {
+          await update();
+
+          // setAuthMessage({
+          //   message: "Signed in successfully!",
+          //   type: "success",
+          // });
+
+          closeAuthModal();
+        }
       }
     } catch (error) {
       console.error("Authentication error:", error);
@@ -92,7 +111,7 @@ const AuthModal = () => {
 
   return (
     <div className="absolute inset-0 flex items-center justify-center z-[10] bg-black/50">
-      <div className="w-[95%] md:w-[400px] h-[80%] rounded-[20px] bg-black border border-[#212121] p-[20px]">
+      <div className="w-[95%] md:w-[400px] h-[auto] rounded-[20px] bg-black border border-[#212121] p-[20px]">
         <div className="relative w-[100%] h-[80px] flex flex-col justify-center my-[10px]">
           <p className="text-[1.5rem] text-[gray] font-medium">
             {mode === "signup" ? "Sign Up" : "Sign In"}
@@ -111,8 +130,8 @@ const AuthModal = () => {
           </button>
         </div>
 
-        <div className="w-[100%] h-[40px] my-[20px] flex items-center justify-center">
-          {authMessage && (
+        {authMessage && (
+          <div className="w-[100%] h-[40px] my-[20px] flex items-center justify-center">
             <p
               className={`text-sm ${
                 authMessage.type === "success"
@@ -122,8 +141,8 @@ const AuthModal = () => {
             >
               {authMessage.message}
             </p>
-          )}
-        </div>
+          </div>
+        )}
 
         <form
           onSubmit={handleSubmit(onSubmit)}

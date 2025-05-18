@@ -1,48 +1,51 @@
+// actions/auth/authenticate.ts
 "use server";
 
 import { signIn } from "@/auth";
+import { CustomError } from "@/lib/error";
 import { AuthError } from "next-auth";
 
 interface AuthenticateResponse {
   success?: boolean;
   message?: string;
-  error?: {
-    message: string;
-    details?: string;
-  };
+  error?: string;
 }
 
-export async function authenticate(
-  formData: FormData
-): Promise<AuthenticateResponse> {
+export async function authenticate(credentials: {
+  email: string;
+  password: string;
+}): Promise<AuthenticateResponse> {
   try {
-    await signIn("credentials", {
-      email: formData.get("email"),
-      password: formData.get("password"),
+    const result = await signIn("credentials", {
+      email: credentials.email,
+      password: credentials.password,
       redirect: false,
     });
-    return { success: true, message: "Login successful" };
-  } catch (err: unknown) {
-    console.error("Authenticate error:", err);
 
-    if (err instanceof AuthError) {
-      return { error: { message: err.message } };
+    if (result?.error) {
+      throw new CustomError(result.error);
     }
 
-    if (err instanceof Error) {
+    return { success: true, message: "Login successful" };
+  } catch (error: unknown) {
+    console.error("Authenticate error:", error);
+
+    if (error instanceof CustomError) {
+      return { error: error.message };
+    }
+
+    if (error instanceof AuthError) {
+      return { error: error.message || "Authentication failed" };
+    }
+
+    if (error instanceof Error) {
       return {
-        error: {
-          message: "Failed to login",
-          details: err.message,
-        },
+        error: error.message.includes("fetch")
+          ? "Connection failed. Please try again."
+          : error.message,
       };
     }
 
-    return {
-      error: {
-        message: "Failed to login",
-        details: "Unknown error occurred",
-      },
-    };
+    return { error: "An unexpected error occurred" };
   }
 }

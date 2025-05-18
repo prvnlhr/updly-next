@@ -6,14 +6,17 @@ import { CommunityDetails } from "@/types/communityTypes";
 import parse from "html-react-parser";
 import Link from "next/link";
 import { votePost } from "@/services/user/postServices";
+import { useSession } from "next-auth/react";
 
 interface CommunityPageProps {
   communityDetails: CommunityDetails;
 }
 const CommunityPage: React.FC<CommunityPageProps> = ({ communityDetails }) => {
+  const { data: session } = useSession();
+  const user = session?.user;
   const { community, posts } = communityDetails;
 
-  const currentUserId = "613be41a-4ef1-43b9-af58-11ce6894528b";
+  const currentUserId = user?.id;
   const handleVote = async (postId: string) => {
     try {
       await votePost(currentUserId, postId);
