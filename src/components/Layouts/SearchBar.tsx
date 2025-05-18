@@ -1,7 +1,7 @@
 import { Icon } from "@iconify/react/dist/iconify.js";
 import React, { useState, useEffect, useRef } from "react";
 import Image from "next/image";
-import { searchContent } from "@/services/searchServices";
+import { searchContent } from "@/services/public/searchServices";
 import { CommunityPreview, PostPreview } from "@/types/searchTypes";
 import { Oval } from "react-loader-spinner";
 

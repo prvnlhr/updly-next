@@ -1,39 +1,12 @@
+"use client";
+import { useModal } from "@/context/ModalContext";
 import { UserCommunitiesResponse } from "@/types/communityTypes";
 import { Icon } from "@iconify/react/dist/iconify.js";
 import Image from "next/image";
 import Link from "next/link";
+import { useRouter } from "next/navigation";
 import React from "react";
-// const redditCommunities: string[] = [
-//   "r/javascript",
-//   "r/typescript",
-//   "r/reactjs",
-//   "r/webdev",
-//   "r/frontend",
-//   "r/nextjs",
-//   "r/node",
-//   "r/programming",
-//   "r/learnprogramming",
-//   "r/coding",
-//   "r/compsci",
-//   "r/softwaredevelopment",
-//   "r/technology",
-//   "r/startups",
-//   "r/entrepreneur",
-//   "r/productivity",
-//   "r/dataisbeautiful",
-//   "r/machinelearning",
-//   "r/AskReddit",
-//   "r/worldnews",
-// ];
 
-// const recentVisited: string[] = [
-//   "r/typescript",
-//   "r/nextjs",
-//   "r/node",
-//   "r/softwaredevelopment",
-//   "r/AskReddit",
-//   "r/worldnews",
-// ];
 interface NavigationSidebarProps {
   sidebarData: UserCommunitiesResponse;
 }
@@ -41,6 +14,17 @@ const NavigationSidebar: React.FC<NavigationSidebarProps> = ({
   sidebarData,
 }) => {
   const { createdCommunities, joinedCommunities } = sidebarData;
+  const router = useRouter();
+  const { openAuthModal } = useModal();
+
+  const handleCreateCommunity = () => {
+    const userId = undefined;
+    if (!userId) {
+      openAuthModal();
+      return;
+    }
+    router.push(`?create-community=true`);
+  };
   return (
     <div className="w-[20%] h-full border-r border-[#212121] flex items-center justify-center p-[10px]">
       <div className="w-[80%] h-[90%] flex flex-col overflow-y-scroll hide-scrollbar">
@@ -77,9 +61,9 @@ const NavigationSidebar: React.FC<NavigationSidebarProps> = ({
           <div className="w-[100%] h-[50px] flex items-center">
             <p className="text-sm text-[#A2A8B2]">COMMUNITIES</p>
           </div>
-          <Link
-            href={`?create-community=true`}
-            className="w-[100%] h-[40px] flex my-[5px]"
+          <button
+            onClick={handleCreateCommunity}
+            className="w-[100%] h-[40px] flex my-[5px] cursor-pointer"
           >
             <div className="h-[100%] aspect-[1/1] flex items-center justify-center border-[#212121] rounded-full">
               <Icon icon="majesticons:plus-line" width="24" height="24" />
@@ -87,7 +71,7 @@ const NavigationSidebar: React.FC<NavigationSidebarProps> = ({
             <div className="flex-1 h-[100%] flex items-center justify-start px-[0px] overflow-hidden">
               <p className="text-sm truncate">Create a community</p>
             </div>
-          </Link>
+          </button>
           {joinedCommunities.map((joinedCommunity, comIndex) => (
             <Link
               href={`/home/${joinedCommunity.displayName}`}

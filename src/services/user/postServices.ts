@@ -1,3 +1,4 @@
+import { FeedPost } from "@/types/feedTypes";
 import { uploadToCloudinary } from "@/utils/cloudinaryConfig";
 
 const BASE_URL = process.env.NEXT_PUBLIC_VERCEL_URL || "http://localhost:3000";
@@ -88,6 +89,54 @@ export async function uploadMediaAndCreatePost(
     return await createPost(postCreationData);
   } catch (error) {
     console.error("Error in uploadMediaAndCreatePost:", error);
+    throw error;
+  }
+}
+
+export async function votePost(userId: string, postId: string): Promise<void> {
+  try {
+    const response = await fetch(`${BASE_URL}/api/users/${userId}/votes`, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({ postId }),
+    });
+
+    const result = await response.json();
+
+    if (!response.ok) {
+      console.error("Vote Post Error:", result.error || result.message);
+      throw new Error(result.error || "Failed to vote on post");
+    }
+
+    return result.data;
+  } catch (error) {
+    console.error("Vote Post Failed:", error);
+    throw error;
+  }
+}
+
+// Alternative version using your exact parameter pattern
+export async function getUserFeed(userId: string): Promise<FeedPost[]> {
+  try {
+    const response = await fetch(`${BASE_URL}/api/feed/${userId}`, {
+      method: "GET",
+      headers: {
+        "Content-Type": "application/json",
+      },
+    });
+
+    const result = await response.json();
+
+    if (!response.ok) {
+      console.error("Get User Feed Error:", result.error || result.message);
+      throw new Error(result.error || "Failed to fetch user feed");
+    }
+
+    return result.data;
+  } catch (error) {
+    console.error("Get User Feed Failed:", error);
     throw error;
   }
 }

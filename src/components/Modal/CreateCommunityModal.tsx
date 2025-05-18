@@ -5,7 +5,7 @@ import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
 import { useRouter, useSearchParams } from "next/navigation";
-import { createCommunity } from "@/services/communityServices";
+import { createCommunity } from "@/services/user/communityServices";
 import Image from "next/image";
 
 // Zod schema for form validation

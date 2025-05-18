@@ -1,5 +1,5 @@
 import CommunityPage from "@/components/Pages/Community/CommunityPage";
-import { getCommunityDetails } from "@/services/userServices";
+import { getCommunityDetails } from "@/services/user/communityServices";
 import { CommunityDetails } from "@/types/communityTypes";
 const page = async ({
   params,
@@ -10,7 +10,6 @@ const page = async ({
   const communityDetails: CommunityDetails = await getCommunityDetails(
     communityName
   );
-  console.log(" communityDetails:", communityDetails);
   return <CommunityPage communityDetails={communityDetails} />;
 };
 

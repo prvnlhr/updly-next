@@ -8,6 +8,8 @@ import SearchBar from "./SearchBar";
 const HeaderBar = () => {
   const { communityName } = useParams();
 
+  // const handle
+
   return (
     <div className="w-[100%] h-[60px] flex items-center border-b border-[#212121]">
       <div className="aspect-square h-[100%]"></div>

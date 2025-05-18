@@ -7,7 +7,7 @@ import Link from "next/link";
 import { useSearchParams } from "next/navigation";
 import React, { useState } from "react";
 import Image from "next/image";
-import { uploadMediaAndCreatePost } from "@/services/postServices";
+import { uploadMediaAndCreatePost } from "@/services/user/postServices";
 import BodyRichTextEditor from "./BodyRichTextEditor";
 import { CommunityDetails } from "@/types/communityTypes";
 

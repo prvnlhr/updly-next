@@ -1,12 +1,5 @@
-// This is your Prisma schema file,
-// learn more about it in the docs: https://pris.ly/d/prisma-schema
-
-// Looking for ways to speed up your queries, or scale easily with your serverless or edge functions?
-// Try Prisma Accelerate: https://pris.ly/cli/accelerate-init
-
 generator client {
   provider = "prisma-client-js"
-  // output   = "../app/generated/prisma"
 }
 
 datasource db {
@@ -15,83 +8,68 @@ datasource db {
 }
 
 model User {
-  id        String   @id @default(uuid())
-  username  String   @unique
-  createdAt DateTime @default(now())
-
-  // Relationships
-  posts           Post[]
+  id              String            @id @default(uuid())
+  username        String            @unique
+  createdAt       DateTime          @default(now())
+  email           String            @unique
+  password        String
   comments        Comment[]
-  votes           Vote[]
   CommunityMember CommunityMember[]
+  posts           Post[]
+  votes           Vote[]
 }
 
 model Community {
-  id          String   @id @default(uuid())
-  name        String   @unique
+  id          String            @id @default(uuid())
+  name        String            @unique
   displayName String
   description String?
-  iconUrl     String?
+  createdAt   DateTime          @default(now())
   bannerUrl   String?
-  createdAt   DateTime @default(now())
-  updatedAt   DateTime @updatedAt
-
-  // Relationships
-  topics  CommunityTopic[]
-  posts   Post[]
-  members CommunityMember[]
+  iconUrl     String?
+  updatedAt   DateTime          @updatedAt
+  members     CommunityMember[]
+  topics      CommunityTopic[]
+  posts       Post[]
 }
 
 model Post {
-  id        String   @id @default(uuid())
-  title     String
-  content   String?
-  mediaUrl  String?
-  url       String? // Add this line for LINK posts
-  type      PostType @default(TEXT)
-  upvotes   Int      @default(0)
-  createdAt DateTime @default(now())
-
-  // Relationships
+  id          String    @id @default(uuid())
+  title       String
+  content     String?
+  mediaUrl    String?
+  type        PostType  @default(TEXT)
+  upvotes     Int       @default(0)
+  createdAt   DateTime  @default(now())
   authorId    String
-  author      User      @relation(fields: [authorId], references: [id])
   communityId String
-  community   Community @relation(fields: [communityId], references: [id])
+  url         String?
   comments    Comment[]
+  author      User      @relation(fields: [authorId], references: [id])
+  community   Community @relation(fields: [communityId], references: [id])
   Vote        Vote[]
 
   @@index([communityId, createdAt])
   @@index([upvotes])
 }
 
-enum PostType {
-  TEXT
-  IMAGE
-  VIDEO
-  LINK
-}
-
 model Comment {
   id        String   @id @default(uuid())
   content   String
   createdAt DateTime @default(now())
-
-  // Relationships
-  authorId String
-  author   User   @relation(fields: [authorId], references: [id])
-  postId   String
-  post     Post   @relation(fields: [postId], references: [id])
+  authorId  String
+  postId    String
+  author    User     @relation(fields: [authorId], references: [id])
+  post      Post     @relation(fields: [postId], references: [id])
 }
 
 model Vote {
   id       String  @id @default(uuid())
-  isUpvote Boolean // true=upvote, false=downvote
-
-  // Relationships
-  userId String
-  user   User   @relation(fields: [userId], references: [id])
-  postId String
-  post   Post   @relation(fields: [postId], references: [id])
+  isUpvote Boolean
+  userId   String
+  postId   String
+  post     Post    @relation(fields: [postId], references: [id])
+  user     User    @relation(fields: [userId], references: [id])
 
   @@unique([userId, postId])
 }
@@ -104,8 +82,8 @@ model Topic {
 
 model CommunityTopic {
   communityId String
-  community   Community @relation(fields: [communityId], references: [id])
   topicId     String
+  community   Community @relation(fields: [communityId], references: [id])
   topic       Topic     @relation(fields: [topicId], references: [id])
 
   @@id([communityId, topicId])
@@ -113,13 +91,20 @@ model CommunityTopic {
 
 model CommunityMember {
   userId      String
-  user        User       @relation(fields: [userId], references: [id])
   communityId String
-  community   Community  @relation(fields: [communityId], references: [id])
   role        MemberRole @default(MEMBER)
   joinedAt    DateTime   @default(now())
+  community   Community  @relation(fields: [communityId], references: [id])
+  user        User       @relation(fields: [userId], references: [id])
 
   @@id([userId, communityId])
+}
+
+enum PostType {
+  TEXT
+  IMAGE
+  VIDEO
+  LINK
 }
 
 enum MemberRole {

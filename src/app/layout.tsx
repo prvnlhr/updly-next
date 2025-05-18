@@ -1,7 +1,9 @@
 import type { Metadata } from "next";
 import localFont from "next/font/local";
 import "./globals.css";
-
+import { ModalProvider } from "@/context/ModalContext";
+import AuthModal from "@/components/Modal/AuthModal";
+import { ClerkProvider } from "@clerk/nextjs";
 const lufga = localFont({
   src: [
     {
@@ -110,8 +112,15 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   return (
-    <html lang="en">
-      <body className={`${lufga.variable} antialiased`}>{children}</body>
-    </html>
+    <ClerkProvider>
+      <ModalProvider>
+        <html lang="en">
+          <body className={`${lufga.variable} antialiased`}>
+            <AuthModal />
+            {children}
+          </body>
+        </html>
+      </ModalProvider>
+    </ClerkProvider>
   );
 }

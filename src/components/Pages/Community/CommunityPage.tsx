@@ -1,15 +1,28 @@
+"use client";
 import React from "react";
 import Image from "next/image";
 import { Icon } from "@iconify/react/dist/iconify.js";
 import { CommunityDetails } from "@/types/communityTypes";
 import parse from "html-react-parser";
 import Link from "next/link";
+import { votePost } from "@/services/user/postServices";
 
 interface CommunityPageProps {
   communityDetails: CommunityDetails;
 }
 const CommunityPage: React.FC<CommunityPageProps> = ({ communityDetails }) => {
   const { community, posts } = communityDetails;
+
+  const currentUserId = "613be41a-4ef1-43b9-af58-11ce6894528b";
+  const handleVote = async (postId: string) => {
+    try {
+      await votePost(currentUserId, postId);
+      // Refresh your UI or update state as needed
+    } catch (error) {
+      console.log(" error:", error);
+    }
+  };
+
   return (
     <div className="w-[100%] h-[100%] p-[10px] flex flex-col overflow-y-scroll hide-scrollbar">
       <div className="relative w-[100%] h-[200px] min-h-[200px] flex flex-col justify-end rounded-[20px] z-1 mb-[20px]">
@@ -52,7 +65,7 @@ const CommunityPage: React.FC<CommunityPageProps> = ({ communityDetails }) => {
                     className="w-[16px] h-[16px] text-[#A2A8B2]"
                   />
                   <p className="text-xs text-[#A2A2A2]">
-                    {new Date(post.createdAt).toLocaleDateString()}
+                    {/* {new Date(post.createdAt).toLocaleDateString()} */}
                   </p>
                 </div>
               </div>
@@ -103,15 +116,21 @@ const CommunityPage: React.FC<CommunityPageProps> = ({ communityDetails }) => {
               {/* Post footer (upvotes/comments) */}
               <div className="w-[100%] h-[40px] flex items-center">
                 <div className="w-[auto] h-[90%] flex items-center rounded-full bg-gray-300/10">
-                  <div className="h-[100%] aspect-square flex items-center hover:bg-gray-300/10 rounded-full justify-center">
+                  <button
+                    onClick={() => handleVote(post.id)}
+                    className="h-[100%] aspect-square flex items-center hover:bg-gray-300/10 rounded-full justify-center"
+                  >
                     <Icon icon="bx:upvote" className="w-[15px] h-[15px]" />
-                  </div>
+                  </button>
                   <div className="h-[100%] w-[auto] px-[5px] text-xs flex items-center justify-center">
                     {post.upvotes || 0}
                   </div>
-                  <div className="h-[100%] aspect-square flex items-center hover:bg-gray-300/10 rounded-full justify-center">
+                  <button
+                    onClick={() => handleVote(post.id)}
+                    className="h-[100%] aspect-square flex items-center hover:bg-gray-300/10 rounded-full justify-center"
+                  >
                     <Icon icon="bx:downvote" className="w-[15px] h-[15px]" />
-                  </div>
+                  </button>
                 </div>
                 <div className="w-[auto] h-[90%] flex items-center rounded-full bg-gray-300/10 ml-[10px]">
                   <div className="h-[100%] aspect-square flex items-center hover:bg-gray-300/10 rounded-full justify-center">

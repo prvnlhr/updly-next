@@ -1,8 +1,8 @@
 import React from "react";
 import NavigationSidebar from "../Pages/Feed/NavigationSidebar";
 import HeaderBar from "./HeaderBar";
-import { getUserCommunities } from "@/services/userServices";
 import { UserCommunitiesResponse } from "@/types/communityTypes";
+import { getUserCommunities } from "@/services/user/communityServices";
 
 const HomeLayout = async ({
   children,
@@ -16,7 +16,7 @@ const HomeLayout = async ({
     <div className="w-full h-screen flex flex-col items-center justify-center">
       <HeaderBar />
       <div className="w-[100%] h-[calc(100%-60px)] flex">
-        <NavigationSidebar sidebarData={sidebarData}/>
+        <NavigationSidebar sidebarData={sidebarData} />
         <div className="flex-1 h-[100%] flex min-w-0">{children}</div>
       </div>
     </div>
