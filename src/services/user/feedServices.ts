@@ -16,7 +16,7 @@ export async function getUserFeed(userId: string): Promise<FeedPost[]> {
 
     if (!response.ok) {
       console.error("Get User Feed Error:", result.error || result.message);
-      throw new Error(result.error || "Failed to fetch user feed");
+      throw new Error(result.error || "Failed to fm=etch user feed");
     }
 
     return result.data;

@@ -1,17 +1,20 @@
 // src/services/feedService.ts
 import { FeedPost } from "@/types/feedTypes";
 
-const BASE_URL =
-  process.env.NEXT_PUBLIC_VERCEL_URL || "https://updly-next.vercel.app";
+// const BASE_URL =
+//   process.env.NEXT_PUBLIC_VERCEL_URL || "https://updly-next.vercel.app";
 
 export async function getPublicFeed(): Promise<FeedPost[]> {
   try {
-    const response = await fetch(`${BASE_URL}/api/public/feed`, {
-      method: "GET",
-      headers: {
-        "Content-Type": "application/json",
-      },
-    });
+    const response = await fetch(
+      `${"https://updly-next.vercel.app"}/api/public/feed`,
+      {
+        method: "GET",
+        headers: {
+          "Content-Type": "application/json",
+        },
+      }
+    );
 
     const result = await response.json();
 
