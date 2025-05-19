@@ -1,5 +1,5 @@
 import CreatePostPage from "@/components/Pages/Post/CreatePostPage";
-import { getCommunityDetails } from "@/services/user/userServices";
+import { getCommunityDetails } from "@/services/user/communityServices";
 import { CommunityDetails } from "@/types/communityTypes";
 import React from "react";
 
