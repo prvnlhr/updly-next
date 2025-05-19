@@ -10,7 +10,7 @@ interface CreateCommunityParams {
   icon?: File;
   banner?: File;
   topics: string[];
-  userId: string; // Added userId for creator association
+  userId: string;
 }
 
 export async function createCommunity(data: CreateCommunityParams) {

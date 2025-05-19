@@ -39,7 +39,7 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
     Credentials({
       async authorize(credentials: unknown) {
         // Validate environment variable
-        const apiBaseUrl = process.env.NEXT_PUBLIC_API_BASE_URL;
+        const apiBaseUrl = process.env.NEXT_PUBLIC_VERCEL_URL;
         if (!apiBaseUrl) {
           throw new CustomError("API base URL is not configured");
         }
