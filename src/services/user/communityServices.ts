@@ -1,3 +1,4 @@
+import { revalidateTagHandler } from "@/revalidation";
 import { UserCommunitiesResponse } from "@/types/communityTypes";
 import { uploadToCloudinary } from "@/utils/cloudinaryConfig";
 
@@ -31,8 +32,6 @@ export async function createCommunity(data: CreateCommunityParams) {
       creatorId: data.userId,
     };
 
-    console.log(" payload:", payload);
-
     const response = await fetch(`${BASE_URL}/api/communities`, {
       method: "POST",
       headers: {
@@ -47,7 +46,7 @@ export async function createCommunity(data: CreateCommunityParams) {
       console.error("Create Community Error:", result.error || result.message);
       throw new Error(result.error || "Failed to create community");
     }
-
+    await revalidateTagHandler("userCommunties");
     return result.data;
   } catch (error) {
     console.error("Create Community Failed:", error);
@@ -65,6 +64,9 @@ export async function getUserCommunities(
         method: "GET",
         headers: {
           "Content-Type": "application/json",
+        },
+        next: {
+          tags: ["userCommunties"],
         },
       }
     );

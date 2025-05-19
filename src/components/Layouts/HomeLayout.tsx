@@ -11,7 +11,7 @@ const HomeLayout = async ({
   children: React.ReactNode;
 }>) => {
   const session = await auth();
-  const userId = session?.user?.userId;
+  const userId = session?.user?.id;
   let sidebarData: UserCommunitiesResponse = {
     createdCommunities: [],
     joinedCommunities: [],

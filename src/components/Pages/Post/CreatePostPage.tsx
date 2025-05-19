@@ -10,6 +10,7 @@ import Image from "next/image";
 import { uploadMediaAndCreatePost } from "@/services/user/postServices";
 import BodyRichTextEditor from "./BodyRichTextEditor";
 import { CommunityDetails } from "@/types/communityTypes";
+import { useSession } from "next-auth/react";
 
 const isFileList = (value: unknown): value is FileList => {
   return typeof window !== "undefined" && value instanceof FileList;
@@ -63,6 +64,8 @@ const CreatePostPage: React.FC<CreatePostPageProps> = ({
   const postType = searchParams.get("type") || "text";
   const [preview, setPreview] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
+  const { data: session } = useSession();
+  const user = session?.user;
 
   const {
     register,
@@ -85,7 +88,7 @@ const CreatePostPage: React.FC<CreatePostPageProps> = ({
   const onSubmit = async (data: FormValues) => {
     try {
       const communityId = community.id;
-      const userId = "85d88c8a-e929-41d1-af44-795bdd5c7167"; // Hardcoded userId
+      const userId = user?.id; // Hardcoded userId
 
       // Define base post data with proper type
       let postData: {
@@ -132,7 +135,7 @@ const CreatePostPage: React.FC<CreatePostPageProps> = ({
     } finally {
     }
   };
-  
+
   const handleFileChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const files = e.target.files;
     if (files && files[0]) {

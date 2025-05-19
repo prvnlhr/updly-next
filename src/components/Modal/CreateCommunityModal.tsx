@@ -8,6 +8,7 @@ import { useRouter, useSearchParams } from "next/navigation";
 import { createCommunity } from "@/services/user/communityServices";
 import Image from "next/image";
 import { useSession } from "next-auth/react";
+import { categories } from "@/utils/communityCategories";
 
 // Zod schema for form validation
 const communitySchema = z.object({
@@ -23,119 +24,6 @@ const communitySchema = z.object({
 
 type CommunityFormData = z.infer<typeof communitySchema>;
 
-// Category and topic data
-const categories = [
-  {
-    name: "Music",
-    topics: [
-      "Pop",
-      "Rock",
-      "Hip Hop",
-      "Electronic",
-      "Jazz",
-      "Classical",
-      "R&B",
-      "Country",
-    ],
-  },
-  {
-    name: "Gaming",
-    topics: [
-      "PC Gaming",
-      "Console Gaming",
-      "Mobile Gaming",
-      "Esports",
-      "Game Development",
-      "Retro Gaming",
-    ],
-  },
-  {
-    name: "Technology",
-    topics: [
-      "Programming",
-      "Artificial Intelligence",
-      "Cybersecurity",
-      "Web Development",
-      "Data Science",
-    ],
-  },
-  {
-    name: "Sports",
-    topics: [
-      "Football",
-      "Basketball",
-      "Tennis",
-      "Swimming",
-      "Cycling",
-      "Running",
-    ],
-  },
-  {
-    name: "Movies",
-    topics: [
-      "Action",
-      "Comedy",
-      "Horror",
-      "Sci-Fi",
-      "Documentary",
-      "Animation",
-    ],
-  },
-  {
-    name: "Books",
-    topics: [
-      "Fiction",
-      "Non-Fiction",
-      "Fantasy",
-      "Science Fiction",
-      "Biography",
-      "Mystery",
-    ],
-  },
-  {
-    name: "Food",
-    topics: [
-      "Cooking",
-      "Baking",
-      "Vegan",
-      "BBQ",
-      "Desserts",
-      "International Cuisine",
-    ],
-  },
-  {
-    name: "Travel",
-    topics: [
-      "Backpacking",
-      "Luxury Travel",
-      "Road Trips",
-      "Hiking",
-      "Beach Destinations",
-    ],
-  },
-  {
-    name: "Fitness",
-    topics: [
-      "Weightlifting",
-      "Yoga",
-      "CrossFit",
-      "Running",
-      "Calisthenics",
-      "Nutrition",
-    ],
-  },
-  {
-    name: "Art",
-    topics: [
-      "Painting",
-      "Digital Art",
-      "Photography",
-      "Sculpture",
-      "Street Art",
-    ],
-  },
-];
-
 const CreateCommunityModal = () => {
   const router = useRouter();
   const { data: session } = useSession();
@@ -146,6 +34,7 @@ const CreateCommunityModal = () => {
   const [bannerPreview, setBannerPreview] = useState<string | null>(null);
   const iconInputRef = useRef<HTMLInputElement>(null);
   const bannerInputRef = useRef<HTMLInputElement>(null);
+  const [error, setError] = useState<string | null>(null);
 
   const {
     register,
@@ -198,14 +87,17 @@ const CreateCommunityModal = () => {
   };
 
   const onSubmit = async (data: CommunityFormData) => {
-    console.log("Form submitted:", data);
     try {
       await createCommunity({
         ...data,
         userId: user.id,
       });
+      onClose();
     } catch (err) {
       console.log(err);
+      setError(
+        err instanceof Error ? err.message : "Failed to create community"
+      );
     }
   };
 
@@ -223,7 +115,7 @@ const CreateCommunityModal = () => {
   return (
     <div className="absolute inset-0 flex items-center justify-center z-[10] bg-black/50">
       <div className="w-[95%] md:w-[50%] h-[75%] rounded-[20px] bg-black border border-[#212121] p-[20px]">
-        <div className="relative w-[100%] h-[70px] flex flex-col justify-center">
+        <div className="relative w-[100%] h-[auto] flex flex-col justify-center">
           <p className="text-[1.5rem] text-[gray] font-medium">
             Tell us about your community
           </p>
@@ -238,6 +130,11 @@ const CreateCommunityModal = () => {
             <Icon icon="lets-icons:close-round" className="w-[18px] h-[18px]" />
           </button>
         </div>
+        {error && (
+          <div className="w-[300px] p-3 my-4 text-red-500 text-sm bg-red-500/10 rounded self-start">
+            {error}
+          </div>
+        )}
         <form
           onSubmit={handleSubmit(onSubmit)}
           className="w-[100%] h-[calc(100%-70px)] overflow-y-scroll hide-scrollbar"
