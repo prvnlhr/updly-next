@@ -31,13 +31,14 @@ interface CommunityDetailsResponse {
     };
   }[];
 }
+type Params = Promise<{ communityName: string }>;
 
 export async function GET(
   request: NextRequest,
-  { params }: { params: { communityName: string } }
+  segmentData: { params: Params }
 ) {
   try {
-    let { communityName } = params;
+    let { communityName } = await segmentData.params;
     if (!communityName) {
       return createResponse(400, null, "Community name is required");
     }

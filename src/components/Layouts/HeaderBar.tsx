@@ -47,14 +47,16 @@ const HeaderBar = () => {
           <SearchBar />
         </div>
 
-        <Link
-          href={`${
-            communityName ? `/home/r/${communityName}/submit` : `/home/submit`
-          }`}
-          className="h-[100%] aspect-[1/2] flex items-center justify-center p-[5px]"
-        >
-          <Icon icon="majesticons:plus" width="20" height="20" />
-        </Link>
+        {user?.id && (
+          <Link
+            href={`${
+              communityName ? `/home/r/${communityName}/submit` : `/home/submit`
+            }`}
+            className="h-[100%] aspect-[1/2] flex items-center justify-center p-[5px]"
+          >
+            <Icon icon="majesticons:plus" width="20" height="20" />
+          </Link>
+        )}
 
         {status === "authenticated" ? (
           <div className="h-[100%] w-auto flex items-center justify-center">
