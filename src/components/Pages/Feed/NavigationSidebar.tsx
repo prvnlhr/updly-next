@@ -14,9 +14,9 @@ interface NavigationSidebarProps {
 const NavigationSidebar: React.FC<NavigationSidebarProps> = ({
   sidebarData,
 }) => {
+  const { createdCommunities, joinedCommunities } = sidebarData;
   const { data: session } = useSession();
   const user = session?.user;
-  const { createdCommunities, joinedCommunities } = sidebarData;
   const router = useRouter();
   const { openAuthModal } = useModal();
 

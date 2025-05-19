@@ -12,8 +12,15 @@ const HomeLayout = async ({
 }>) => {
   const session = await auth();
   const userId = session?.user?.userId;
-  console.log(" userId:", userId);
-  const sidebarData: UserCommunitiesResponse = await getUserCommunities(userId);
+  let sidebarData: UserCommunitiesResponse = {
+    createdCommunities: [],
+    joinedCommunities: [],
+  };
+
+  // Only fetch if userId exists
+  if (userId) {
+    sidebarData = await getUserCommunities(userId);
+  }
   return (
     <div className="w-full h-screen flex flex-col items-center justify-center">
       <HeaderBar />
