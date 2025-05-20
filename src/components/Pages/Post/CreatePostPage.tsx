@@ -145,7 +145,7 @@ const CreatePostPage: React.FC<CreatePostPageProps> = ({
         iconUrl: community.iconUrl || communityPlaceholder,
         bannerUrl: community.bannerUrl,
         createdAt: new Date(community.createdAt),
-        updatedAt: new Date(), // Add this if your mock had it
+        updatedAt: new Date(),
         _count: {
           members: community.memberCount,
           posts: community.postCount,
