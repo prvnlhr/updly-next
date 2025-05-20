@@ -110,8 +110,10 @@ const MainFeed: React.FC<MainFeedProps> = ({ feeds }) => {
                 </p>
               </div>
               {/* Description */}
-              <div className="w-[100%] h-[auto] flex items-center px-[10px] z-[3]">
-                <>{post.content && parse(post.content)}</>
+              <div className="w-full h-[70px] flex items-start p-[15px] z-[3] overflow-hidden">
+                <div className="w-full h-full overflow-hidden line-clamp-1">
+                  {post.content && parse(post.content)}
+                </div>
               </div>
               <div className="w-[100%] h-[60px] flex items-center px-[5px] py-[5px] z-[3]">
                 <div className="h-[100%] aspect-square rounded-full border border-white/10"></div>
@@ -161,7 +163,10 @@ const MainFeed: React.FC<MainFeedProps> = ({ feeds }) => {
                       />
                     </div>
                   ) : (
-                    <>{post.content && parse(post.content)}</>
+                    <div className="line-clamp-[10]">
+
+                      <>{post.content && parse(post.content)}</>
+                    </div>
                   )}
                 </div>
               </div>

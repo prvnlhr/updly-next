@@ -5,12 +5,15 @@ import { z } from "zod";
 import { Icon } from "@iconify/react/dist/iconify.js";
 import Link from "next/link";
 import { useSearchParams } from "next/navigation";
-import React, { useState } from "react";
+import React, { useState, useEffect, useRef } from "react";
 import Image from "next/image";
 import { uploadMediaAndCreatePost } from "@/services/user/postServices";
 import BodyRichTextEditor from "./BodyRichTextEditor";
-import { CommunityDetails } from "@/types/communityTypes";
+import { CommunityData } from "@/types/communityTypes";
 import { useSession } from "next-auth/react";
+import { searchCommunities } from "@/services/public/communityService";
+
+const communityPlaceholder = "/communityPlaceholder.png";
 
 const isFileList = (value: unknown): value is FileList => {
   return typeof window !== "undefined" && value instanceof FileList;
@@ -53,19 +56,45 @@ const postSchema = z.discriminatedUnion("type", [
 type FormValues = z.infer<typeof postSchema>;
 
 interface CreatePostPageProps {
-  communityDetails: CommunityDetails;
+  communityDetails: CommunityData | null;
 }
+
+const defaultCommunity: CommunityData = {
+  id: "",
+  name: "",
+  displayName: "all communities",
+  description: null,
+  iconUrl: communityPlaceholder,
+  bannerUrl: null,
+  createdAt: new Date(),
+  updatedAt: new Date(),
+  _count: {
+    members: 0,
+    posts: 0,
+  },
+};
 
 const CreatePostPage: React.FC<CreatePostPageProps> = ({
   communityDetails,
 }) => {
-  const { community } = communityDetails;
   const searchParams = useSearchParams();
   const postType = searchParams.get("type") || "text";
   const [preview, setPreview] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
   const { data: session } = useSession();
   const user = session?.user;
+
+  // Community selection states
+  const [showCommunitySearch, setShowCommunitySearch] = useState(false);
+  const [searchQuery, setSearchQuery] = useState("");
+  const [selectedCommunity, setSelectedCommunity] = useState<CommunityData>(
+    communityDetails || defaultCommunity
+  );
+  const [availableCommunities, setAvailableCommunities] = useState<
+    CommunityData[]
+  >([]);
+  const [isLoadingCommunities, setIsLoadingCommunities] = useState(false);
+  const searchRef = useRef<HTMLDivElement>(null);
 
   const {
     register,
@@ -85,12 +114,83 @@ const CreatePostPage: React.FC<CreatePostPageProps> = ({
     },
   });
 
+  useEffect(() => {
+    setSelectedCommunity(communityDetails || defaultCommunity);
+  }, [communityDetails]);
+
+  useEffect(() => {
+    const handleClickOutside = (event: MouseEvent) => {
+      if (
+        searchRef.current &&
+        !searchRef.current.contains(event.target as Node)
+      ) {
+        setShowCommunitySearch(false);
+      }
+    };
+
+    document.addEventListener("mousedown", handleClickOutside);
+    return () => {
+      document.removeEventListener("mousedown", handleClickOutside);
+    };
+  }, []);
+  const fetchCommunities = async (query: string) => {
+    setIsLoadingCommunities(true);
+    try {
+      const results = await searchCommunities(query);
+      return results.map((community) => ({
+        id: community.id,
+        name: community.name,
+        displayName: community.displayName,
+        description: community.description,
+        iconUrl: community.iconUrl || communityPlaceholder,
+        bannerUrl: community.bannerUrl,
+        createdAt: new Date(community.createdAt),
+        updatedAt: new Date(), // Add this if your mock had it
+        _count: {
+          members: community.memberCount,
+          posts: community.postCount,
+        },
+      }));
+    } catch (error) {
+      console.error("Error fetching communities:", error);
+      return [];
+    } finally {
+      setIsLoadingCommunities(false);
+    }
+  };
+
+  const handleSearchChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const query = e.target.value;
+    setSearchQuery(query);
+
+    if (query.length > 0) {
+      const results = await fetchCommunities(query);
+      setAvailableCommunities(results);
+    } else {
+      setAvailableCommunities([]);
+    }
+  };
+
+  const handleCommunitySelect = (community: CommunityData) => {
+    setSelectedCommunity(community);
+    setShowCommunitySearch(false);
+    setSearchQuery("");
+    setAvailableCommunities([]);
+  };
+
+  const toggleCommunitySearch = () => {
+    setShowCommunitySearch(!showCommunitySearch);
+    if (!showCommunitySearch) {
+      setSearchQuery("");
+      setAvailableCommunities([]);
+    }
+  };
+
   const onSubmit = async (data: FormValues) => {
     try {
-      const communityId = community.id;
-      const userId = user?.id; // Hardcoded userId
+      const communityId = selectedCommunity.id as string;
+      const userId = user?.id;
 
-      // Define base post data with proper type
       let postData: {
         title: string;
         type: "TEXT" | "IMAGE" | "VIDEO" | "LINK";
@@ -106,7 +206,6 @@ const CreatePostPage: React.FC<CreatePostPageProps> = ({
         userId,
       };
 
-      // Add type-specific fields
       if (data.type === "text") {
         postData = {
           ...postData,
@@ -125,14 +224,11 @@ const CreatePostPage: React.FC<CreatePostPageProps> = ({
           url: data.url,
         };
       }
-      // console.log(" postData:", postData);
-      // return;
       await uploadMediaAndCreatePost(postData, communityId, userId);
       reset();
       setPreview(null);
     } catch (err) {
       setError(err instanceof Error ? err.message : "Failed to create post");
-    } finally {
     }
   };
 
@@ -141,7 +237,6 @@ const CreatePostPage: React.FC<CreatePostPageProps> = ({
     if (files && files[0]) {
       const file = files[0];
 
-      // Validate file type
       if (!file.type.match(/image\/*|video\/*/)) {
         setError("Only image or video files are allowed");
         return;
@@ -153,13 +248,11 @@ const CreatePostPage: React.FC<CreatePostPageProps> = ({
       };
       reader.readAsDataURL(file);
 
-      // Set the file list value and trigger validation
       setValue("media", files);
       await trigger("media");
     }
   };
 
-  // Type guards remain the same
   const hasMediaError = (
     errors: FieldErrors<FormValues>
   ): errors is FieldErrors<FormValues> & { media: { message: string } } => {
@@ -200,30 +293,97 @@ const CreatePostPage: React.FC<CreatePostPageProps> = ({
 
         <div className="w-[100%] h-[calc(100%-50px)] flex flex-col">
           {/* Community selector */}
-          <div className="w-[100%] h-[60px] min-h-[60px] flex items-center">
-            <div className="w-auto h-[80%] flex border border-[#212121] rounded-full">
-              <div className="h-[100%] aspect-square flex items-center justify-center">
-                <div className="relative overflow-hidden w-[80%] h-[80%] border border-[#212121] rounded-full">
+          <div
+            className="w-[100%] h-[60px] min-h-[60px] flex items-center relative"
+            ref={searchRef}
+          >
+            {showCommunitySearch ? (
+              <div className="w-full max-w-[300px] relative">
+                <div className="relative flex items-center">
+                  <input
+                    type="text"
+                    value={searchQuery}
+                    onChange={handleSearchChange}
+                    placeholder="Search communities..."
+                    className="w-full h-[40px] px-3 py-2 border border-[#212121] rounded-full focus:outline-none pl-10"
+                    autoFocus
+                  />
+                  <Icon
+                    icon="ion:search"
+                    className="absolute left-3 text-gray-500 w-4 h-4"
+                  />
+                </div>
+
+                {isLoadingCommunities && (
+                  <div className="absolute top-[45px] left-0 w-full bg-white border border-[#212121] rounded-lg shadow-lg z-10 p-2">
+                    <div className="flex justify-center items-center py-2">
+                      <Icon icon="eos-icons:loading" className="w-6 h-6" />
+                    </div>
+                  </div>
+                )}
+
+                {!isLoadingCommunities && availableCommunities.length > 0 && (
+                  <div className="absolute top-[45px] left-0 w-full bg-white border border-[#212121] rounded-lg shadow-lg z-10 max-h-[300px] overflow-y-auto">
+                    {availableCommunities.map((community) => (
+                      <div
+                        key={community.id}
+                        className="p-2 hover:bg-gray-100 cursor-pointer flex items-center"
+                        onClick={() => handleCommunitySelect(community)}
+                      >
+                        <div className="relative w-6 h-6 rounded-full overflow-hidden mr-2">
+                          <Image
+                            src={community.iconUrl || communityPlaceholder}
+                            alt={community.displayName}
+                            fill
+                            className="object-cover"
+                          />
+                        </div>
+                        <div className="flex flex-col">
+                          <span className="text-sm font-medium">
+                            r/{community.displayName}
+                          </span>
+                          <span className="text-xs text-gray-500">
+                            {community._count.members} members
+                          </span>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                )}
+
+                {!isLoadingCommunities &&
+                  searchQuery &&
+                  availableCommunities.length === 0 && (
+                    <div className="absolute top-[45px] left-0 w-full bg-white border border-[#212121] rounded-lg shadow-lg z-10 p-2">
+                      <div className="text-center py-2 text-sm text-gray-500">
+                        No communities found
+                      </div>
+                    </div>
+                  )}
+              </div>
+            ) : (
+              <button
+                type="button"
+                onClick={toggleCommunitySearch}
+                className="w-auto h-[40px] flex items-center border border-[#212121] rounded-full hover:bg-gray-100 transition-colors px-3"
+              >
+                <div className="relative w-6 h-6 rounded-full overflow-hidden mr-2">
                   <Image
-                    src={community.iconUrl as string}
-                    alt={community.displayName}
-                    fill={true}
+                    src={selectedCommunity.iconUrl as string}
+                    alt={selectedCommunity.displayName}
+                    fill
                     className="object-cover"
                   />
                 </div>
-              </div>
-              <div className="w-auto h-[100%] flex items-center justify-center px-[5px]">
-                <p className="text-[0.7rem] font-medium">
-                  r/{community.displayName}
+                <p className="text-sm font-medium mr-2">
+                  r/{selectedCommunity.displayName}
                 </p>
-              </div>
-              <div className="h-[100%] w-auto flex items-center justify-center mx-[10px]">
                 <Icon
                   icon="meteor-icons:chevron-down"
-                  className="w-[15px] h-[15px]"
+                  className="w-4 h-4 text-gray-500"
                 />
-              </div>
-            </div>
+              </button>
+            )}
           </div>
 
           {/* Post type selector */}

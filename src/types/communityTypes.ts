@@ -29,7 +29,7 @@ export interface CommunityDetails {
 }
 
 export interface CommunityData {
-  id: string;
+  id?: string;
   name: string;
   displayName: string;
   description: string | null;

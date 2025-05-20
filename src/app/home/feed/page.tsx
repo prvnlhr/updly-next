@@ -18,7 +18,6 @@ const Page = async ({
   } else {
     feeds = await getPublicFeed();
   }
-  console.log(" feeds:", feeds);
   const { "create-community": createCommunity } = await searchParams;
 
   return (

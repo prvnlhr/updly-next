@@ -9,11 +9,14 @@ const page = async ({
   params: Promise<{ [key: string]: string }>;
 }) => {
   const { communityName } = await params;
-  const communityDetails: CommunityDetails = await getCommunityDetails(
-    communityName
-  );
+  let communityDetails: CommunityDetails | null = null;
+  if (communityName) {
+    communityDetails = await getCommunityDetails(communityName);
+  }
 
-  return <CreatePostPage communityDetails={communityDetails.community} />;
+  const community = communityDetails?.community;
+
+  return <CreatePostPage communityDetails={community} />;
 };
 
 export default page;

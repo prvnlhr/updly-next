@@ -6,7 +6,7 @@
   /* --background: #010101; */
   /* --background: #0d0d0d; */
   /* --background: #0e0e0e; */
-  --background: #0E1113;
+  --background: #0e1113;
   /* --font-primary: #e0e5eb; */
   --font-primary: #e3e3e3;
   --font-secondary: #5a5d79;
@@ -138,3 +138,4 @@ input:-webkit-autofill:active {
 .scheme-bg {
   background-color: var(--scheme-color);
 }
+
