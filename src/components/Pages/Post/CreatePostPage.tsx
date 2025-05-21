@@ -4,7 +4,7 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
 import { Icon } from "@iconify/react/dist/iconify.js";
 import Link from "next/link";
-import { useSearchParams } from "next/navigation";
+import { useRouter, useSearchParams } from "next/navigation";
 import React, { useState, useEffect, useRef } from "react";
 import Image from "next/image";
 import { uploadMediaAndCreatePost } from "@/services/user/postServices";
@@ -77,6 +77,7 @@ const defaultCommunity: CommunityData = {
 const CreatePostPage: React.FC<CreatePostPageProps> = ({
   communityDetails,
 }) => {
+  const router = useRouter();
   const searchParams = useSearchParams();
   const postType = searchParams.get("type") || "text";
   const [preview, setPreview] = useState<string | null>(null);
@@ -176,6 +177,7 @@ const CreatePostPage: React.FC<CreatePostPageProps> = ({
     setShowCommunitySearch(false);
     setSearchQuery("");
     setAvailableCommunities([]);
+    router.push(`/home/${community.displayName}/submit`);
   };
 
   const toggleCommunitySearch = () => {
@@ -227,6 +229,7 @@ const CreatePostPage: React.FC<CreatePostPageProps> = ({
       await uploadMediaAndCreatePost(postData, communityId, userId);
       reset();
       setPreview(null);
+      router.push(`/home/${selectedCommunity.displayName}`);
     } catch (err) {
       setError(err instanceof Error ? err.message : "Failed to create post");
     }
@@ -315,7 +318,7 @@ const CreatePostPage: React.FC<CreatePostPageProps> = ({
                 </div>
 
                 {isLoadingCommunities && (
-                  <div className="absolute top-[45px] left-0 w-full bg-white border border-[#212121] rounded-lg shadow-lg z-10 p-2">
+                  <div className="absolute top-[45px] left-0 w-full bg-[#010101] border border-[#212121] rounded-lg shadow-lg z-10 p-2">
                     <div className="flex justify-center items-center py-2">
                       <Icon icon="eos-icons:loading" className="w-6 h-6" />
                     </div>
@@ -323,11 +326,11 @@ const CreatePostPage: React.FC<CreatePostPageProps> = ({
                 )}
 
                 {!isLoadingCommunities && availableCommunities.length > 0 && (
-                  <div className="absolute top-[45px] left-0 w-full bg-white border border-[#212121] rounded-lg shadow-lg z-10 max-h-[300px] overflow-y-auto">
+                  <div className="absolute top-[45px] left-0 w-full bg-[#010101] border border-[#212121] rounded-lg shadow-lg z-10 max-h-[300px] overflow-y-auto">
                     {availableCommunities.map((community) => (
                       <div
                         key={community.id}
-                        className="p-2 hover:bg-gray-100 cursor-pointer flex items-center"
+                        className="p-2 hover:bg-gray-300/10 cursor-pointer flex items-center"
                         onClick={() => handleCommunitySelect(community)}
                       >
                         <div className="relative w-6 h-6 rounded-full overflow-hidden mr-2">
@@ -340,7 +343,7 @@ const CreatePostPage: React.FC<CreatePostPageProps> = ({
                         </div>
                         <div className="flex flex-col">
                           <span className="text-sm font-medium">
-                            r/{community.displayName}
+                            {community.displayName}
                           </span>
                           <span className="text-xs text-gray-500">
                             {community._count.members} members
@@ -365,7 +368,7 @@ const CreatePostPage: React.FC<CreatePostPageProps> = ({
               <button
                 type="button"
                 onClick={toggleCommunitySearch}
-                className="w-auto h-[40px] flex items-center border border-[#212121] rounded-full hover:bg-gray-100 transition-colors px-3"
+                className="w-auto h-[40px] flex items-center border border-[#212121] rounded-full hover:bg-gray-300/10 transition-colors px-3"
               >
                 <div className="relative w-6 h-6 rounded-full overflow-hidden mr-2">
                   <Image
@@ -376,7 +379,7 @@ const CreatePostPage: React.FC<CreatePostPageProps> = ({
                   />
                 </div>
                 <p className="text-sm font-medium mr-2">
-                  r/{selectedCommunity.displayName}
+                  {selectedCommunity.displayName}
                 </p>
                 <Icon
                   icon="meteor-icons:chevron-down"

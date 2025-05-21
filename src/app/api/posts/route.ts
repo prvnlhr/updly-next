@@ -59,22 +59,22 @@ export async function POST(request: NextRequest) {
     }
 
     // Verify user is a member of the community
-    const membership = await prisma.communityMember.findUnique({
-      where: {
-        userId_communityId: {
-          userId: body.authorId,
-          communityId: body.communityId,
-        },
-      },
-    });
+    // const membership = await prisma.communityMember.findUnique({
+    //   where: {
+    //     userId_communityId: {
+    //       userId: body.authorId,
+    //       communityId: body.communityId,
+    //     },
+    //   },
+    // });
 
-    if (!membership) {
-      return createResponse(
-        403,
-        null,
-        "User is not a member of this community"
-      );
-    }
+    // if (!membership) {
+    //   return createResponse(
+    //     403,
+    //     null,
+    //     "User is not a member of this community"
+    //   );
+    // }
 
     // Prepare post data
     const postData = {

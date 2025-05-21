@@ -1,87 +1,101 @@
-import React from "react";
+"use client";
+import React, { useState } from "react";
 import Image from "next/image";
 import { Icon } from "@iconify/react";
-// import { redditPosts } from "@/utils/sampleData";
 import { FeedPost } from "@/types/feedTypes";
 import parse from "html-react-parser";
-
-// const samplePosts = [
-//   {
-//     community: "r/ProgrammerHumor",
-//     title: "When you finally fix the bug after 6 hours",
-//     desc: "Me: 'I should document this solution'... Also me: closes IDE immediately",
-//     imageUrl:
-//       "https://images.unsplash.com/photo-1551033406-611cf9a28f67?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&w=1000&q=80",
-//   },
-//   {
-//     community: "r/AskReddit",
-//     title: "What's the most useless talent you have?",
-//     desc: "I can identify most brands of bottled water by taste",
-//     imageUrl:
-//       "https://images.unsplash.com/photo-1530103862676-de8c9debad1d?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&w=1000&q=80",
-//   },
-//   {
-//     community: "r/Technology",
-//     title: "New AI can generate 3D models from text descriptions",
-//     desc: "Researchers demonstrate 'Prompt-to-3D' system with 90% accuracy",
-//     imageUrl:
-//       "https://images.unsplash.com/photo-1677442135136-760c813cd871?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&w=1000&q=80",
-//   },
-//   {
-//     community: "r/Gaming",
-//     title: "GTA 6 trailer breaks record",
-//     desc: "Contains never-before-seen developer notes",
-//     imageUrl:
-//       "https://images.unsplash.com/photo-1493711662062-fa541adb3fc8?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&w=1000&q=80",
-//   },
-//   {
-//     community: "r/Movies",
-//     title: "Christopher Nolan's next film reportedly about AI ethics",
-//     desc: "Shooting begins 2024 with Tom Cruise in talks to star",
-//     imageUrl:
-//       "https://images.unsplash.com/photo-1518676590629-3dcbd9c5a5c9?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&w=1000&q=80",
-//   },
-//   {
-//     community: "r/Showerthoughts",
-//     title: "USB cables are the modern equivalent of 'this end toward enemy'",
-//     desc: "No matter how you look at it, the first try is always wrong",
-//     imageUrl:
-//       "https://images.unsplash.com/photo-1585771724684-38269d6639fd?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&w=1000&q=80",
-//   },
-//   {
-//     community: "r/NatureIsFuckingLit",
-//     title: "This bioluminescent mushroom I found in the forest",
-//     desc: "Nature's own night light",
-//     imageUrl:
-//       "https://images.unsplash.com/photo-1604977048617-3ab9a84f8de0?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&w=1000&q=80",
-//   },
-//   {
-//     community: "r/FoodPorn",
-//     title: "Homemade ramen that took me 12 hours to make",
-//     desc: "Worth every minute",
-//     imageUrl:
-//       "https://images.unsplash.com/photo-1569718212165-3a8278d5f624?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&w=1000&q=80",
-//   },
-//   {
-//     community: "r/space",
-//     title: "James Webb Telescope's latest image of the Carina Nebula",
-//     desc: "The cosmic cliffs have never looked more stunning",
-//     imageUrl:
-//       "https://images.unsplash.com/photo-1635070041078-e363dbe005cb?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&w=1000&q=80",
-//   },
-//   {
-//     community: "r/Art",
-//     title: "My oil painting of the city skyline at golden hour",
-//     desc: "30 hours of work condensed into one moment",
-//     imageUrl:
-//       "https://images.unsplash.com/photo-1578926375605-eaf7559b1458?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&w=1000&q=80",
-//   },
-// ];
+import { formatDate } from "@/utils/dateFormat";
+import { votePost } from "@/services/user/postServices";
+import { useSession } from "next-auth/react";
 
 interface MainFeedProps {
   feeds: FeedPost[];
 }
+
 const MainFeed: React.FC<MainFeedProps> = ({ feeds }) => {
+  const { data: session } = useSession();
+  const user = session?.user;
+  const [posts, setPosts] = useState<FeedPost[]>(feeds);
+
+  const handleVote = async (postId: string, voteType: "up" | "down") => {
+    if (!user?.id) return;
+
+    const originalPosts = [...posts];
+
+    // Optimistic update
+    setPosts((prevPosts) =>
+      prevPosts.map((post) => {
+        if (post.id !== postId) return post;
+
+        let newVoteStatus: boolean | null;
+        let scoreChange = 0;
+
+        if (post.userVote === null) {
+          // New vote
+          newVoteStatus = voteType === "up";
+          scoreChange = voteType === "up" ? 1 : -1;
+        } else if (
+          (voteType === "up" && post.userVote) ||
+          (voteType === "down" && !post.userVote)
+        ) {
+          // Removing vote
+          newVoteStatus = null;
+          scoreChange = post.userVote ? -1 : 1;
+        } else {
+          // Changing vote
+          newVoteStatus = voteType === "up";
+          scoreChange = voteType === "up" ? 2 : -2;
+        }
+
+        return {
+          ...post,
+          userVote: newVoteStatus,
+          upvotes: post.upvotes + scoreChange,
+        };
+      })
+    );
+
+    try {
+      const result = await votePost({
+        postId,
+        userId: user.id,
+        voteType,
+      });
+
+      if (result.status !== "success") {
+        throw new Error(result.error);
+      }
+
+    } catch (error) {
+      console.error("Vote failed:", error);
+      // Revert on error
+      setPosts(originalPosts);
+    }
+  };
+
+  const getVoteButtonClass = (post: FeedPost, direction: "up" | "down") => {
+    const baseClass =
+      "h-[100%] aspect-square flex items-center rounded-full justify-center";
+    const activeClass =
+      direction === "up"
+        ? "text-orange-500 hover:bg-orange-500/10"
+        : "text-blue-500 hover:bg-blue-500/10";
+    const inactiveClass = "text-gray-500 hover:bg-gray-300/20";
+
+    if (post.userVote === null) {
+      return `${baseClass} ${inactiveClass}`;
+    }
+
+    if (
+      (direction === "up" && post.userVote) ||
+      (direction === "down" && !post.userVote)
+    ) {
+      return `${baseClass} ${activeClass}`;
+    }
+
+    return `${baseClass} ${inactiveClass}`;
+  };
+
   return (
     <div className="flex-1 h-full border-r border-[#212121] p-2 overflow-hidden">
       <div className="w-full h-full overflow-y-scroll hide-scrollbar px-[10px]">
@@ -135,15 +149,19 @@ const MainFeed: React.FC<MainFeedProps> = ({ feeds }) => {
           >
             <div className="w-[100%] h-[auto] flex flex-col">
               <div className="w-[100%] h-[40px] flex">
-                <div className="h-[100%] aspect-square border border-[#212121] rounded-full"></div>
+                <div className="h-[100%] aspect-square flex items-center justify-center border border-[#363636] rounded-full">
+                  {post.author.username[0]}
+                </div>
                 <div className="h-[100%] flex-1 flex items-center px-[10px]">
-                  <p className="text-xs">{post.community.displayName}</p>
+                  <p className="text-xs">
+                    {post.community.displayName} {post.userVote}
+                  </p>
                   <Icon
                     icon="bi:dot"
                     className="w-[16px] h-[16px] text-[#A2A8B2]"
                   />
                   <p className="text-xs text-[#A2A8B2]">
-                    {/* {post.createdAt.getTime()} */}
+                    {formatDate(post.createdAt).formattedDate}
                   </p>
                 </div>
               </div>
@@ -164,7 +182,6 @@ const MainFeed: React.FC<MainFeedProps> = ({ feeds }) => {
                     </div>
                   ) : (
                     <div className="line-clamp-[10]">
-
                       <>{post.content && parse(post.content)}</>
                     </div>
                   )}
@@ -172,15 +189,33 @@ const MainFeed: React.FC<MainFeedProps> = ({ feeds }) => {
               </div>
               <div className="w-[100%] h-[40px] flex items-center">
                 <div className="w-[auto] h-[90%] flex items-center rounded-full bg-gray-300/10">
-                  <div className="h-[100%] aspect-square flex items-center hover:bg-gray-300/10 rounded-full justify-center">
+                  <button
+                    onClick={() => handleVote(post.id, "up")}
+                    disabled={!user}
+                    className={getVoteButtonClass(post, "up")}
+                    title={!user ? "Login to vote" : "Upvote"}
+                  >
                     <Icon icon="bx:upvote" className="w-[15px] h-[15px]" />
+                  </button>
+                  <div
+                    className={`h-[100%] w-[auto] px-[5px] text-xs flex items-center justify-center ${
+                      post.userVote === true
+                        ? "text-orange-500"
+                        : post.userVote === false
+                        ? "text-blue-500"
+                        : "text-gray-500"
+                    }`}
+                  >
+                    {post.upvotes}
                   </div>
-                  <div className="h-[100%] w-[auto] px-[5px] text-xs flex items-center justify-center">
-                    {post.upvotes || 0}
-                  </div>
-                  <div className="h-[100%] aspect-square flex items-center hover:bg-gray-300/10 rounded-full justify-center">
+                  <button
+                    onClick={() => handleVote(post.id, "down")}
+                    disabled={!user}
+                    className={getVoteButtonClass(post, "down")}
+                    title={!user ? "Login to vote" : "Downvote"}
+                  >
                     <Icon icon="bx:downvote" className="w-[15px] h-[15px]" />
-                  </div>
+                  </button>
                 </div>
                 <div className="w-[auto] h-[90%] flex items-center rounded-full bg-gray-300/10 ml-[10px]">
                   <div className="h-[100%] aspect-square flex items-center hover:bg-gray-300/10 rounded-full justify-center">

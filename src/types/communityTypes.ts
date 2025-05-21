@@ -35,6 +35,8 @@ export interface CommunityData {
   description: string | null;
   iconUrl: string | null;
   bannerUrl: string | null;
+  isMember?: boolean;
+  ownerId?: string;
   createdAt: Date;
   updatedAt: Date;
   _count: {
@@ -46,24 +48,21 @@ export interface CommunityData {
 export interface PostData {
   id: string;
   title: string;
-  content: string;
+  content: string | null;
   mediaUrl: string | null;
   url: string | null;
-  type: PostType;
+  type: "TEXT" | "IMAGE" | "VIDEO" | "LINK";
   upvotes: number;
   createdAt: Date;
   author: {
     id: string;
     username: string;
   };
-  _count: {
-    comments: number;
+  community: {
+    id: string;
+    name: string;
+    displayName: string;
   };
-}
-
-export enum PostType {
-  TEXT = "TEXT",
-  IMAGE = "IMAGE",
-  VIDEO = "VIDEO",
-  LINK = "LINK",
+  commentCount: number;
+  userVote: boolean | null;
 }

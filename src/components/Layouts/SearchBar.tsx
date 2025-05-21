@@ -4,6 +4,7 @@ import Image from "next/image";
 import { searchContent } from "@/services/public/searchServices";
 import { CommunityPreview, PostPreview } from "@/types/searchTypes";
 import { Oval } from "react-loader-spinner";
+import Link from "next/link";
 
 const SearchBar = () => {
   const [searchQuery, setSearchQuery] = useState("");
@@ -118,7 +119,8 @@ const SearchBar = () => {
                   </div>
                   <div className="w-[100%] h-[auto] flex flex-col">
                     {searchResults.communities.map((community) => (
-                      <div
+                      <Link
+                        href={`/home/${community.displayName}`}
                         key={community.id}
                         className="w-[100%] h-[60px] flex my-[10px] hover:bg-[#212121] rounded p-[10px] cursor-pointer"
                       >
@@ -133,14 +135,12 @@ const SearchBar = () => {
                           )}
                         </div>
                         <div className="flex-1 h-[100%] flex flex-col px-[10px]">
-                          <p className="text-[1rem]">
-                            r/{community.name.split("/")[1]}
-                          </p>
+                          <p className="text-[1rem]">r/{community.name}</p>
                           <p className="text-[0.7rem] font-secondary">
                             {community.memberCount.toLocaleString()} members
                           </p>
                         </div>
-                      </div>
+                      </Link>
                     ))}
                   </div>
                 </div>
@@ -154,7 +154,8 @@ const SearchBar = () => {
                 </div>
                 <div className="w-[100%] h-[auto] flex flex-col">
                   {searchResults.posts.map((post) => (
-                    <div
+                    <Link
+                      href={"/"}
                       key={post.id}
                       className="w-[100%] h-[60px] flex my-[5px] hover:bg-[#212121] rounded p-[10px] cursor-pointer"
                     >
@@ -164,7 +165,7 @@ const SearchBar = () => {
                           r/{post.community.displayName}
                         </p>
                       </div>
-                    </div>
+                    </Link>
                   ))}
                 </div>
               </div>

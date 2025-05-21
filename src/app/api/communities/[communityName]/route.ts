@@ -14,6 +14,8 @@ interface CommunityDetailsResponse {
     updatedAt: Date;
     memberCount: number;
     postCount: number;
+    isMember?: boolean;
+    ownerId?: string;
   };
   posts: {
     id: string;
@@ -31,6 +33,7 @@ interface CommunityDetailsResponse {
     };
   }[];
 }
+
 type Params = Promise<{ communityName: string }>;
 
 export async function GET(
@@ -38,13 +41,15 @@ export async function GET(
   segmentData: { params: Params }
 ) {
   try {
-    let { communityName } = await segmentData.params;
+    const { communityName } = await segmentData.params;
     if (!communityName) {
       return createResponse(400, null, "Community name is required");
     }
-    communityName = `r/${communityName}`;
 
-    const [community, posts] = await prisma.$transaction([
+    // Get userId from query params if it exists
+    const userId = request.nextUrl.searchParams.get("userId");
+
+    const [community, posts, adminMember] = await prisma.$transaction([
       prisma.community.findUnique({
         where: { name: communityName },
         select: {
@@ -91,17 +96,44 @@ export async function GET(
           createdAt: "desc",
         },
       }),
+      // Find the admin member of this community
+      prisma.communityMember.findFirst({
+        where: {
+          community: { name: communityName },
+          role: "ADMIN",
+        },
+        select: {
+          userId: true,
+        },
+      }),
     ]);
+
+    let foundUserMembership = null;
+    if (userId && community) {
+      foundUserMembership = await prisma.communityMember.findUnique({
+        where: {
+          userId_communityId: {
+            userId,
+            communityId: community.id,
+          },
+        },
+      });
+    }
 
     if (!community) {
       return createResponse(404, null, "Community not found");
     }
+
+    const isMember = Boolean(userId && foundUserMembership);
+    const ownerId = adminMember?.userId || null;
 
     const responseData: CommunityDetailsResponse = {
       community: {
         ...community,
         memberCount: community._count.members,
         postCount: community._count.posts,
+        ...(userId && { isMember }),
+        ...(ownerId && { ownerId }), // Include ownerId if it exists
       },
       posts: posts.map((post) => ({
         ...post,
@@ -112,6 +144,7 @@ export async function GET(
         },
       })),
     };
+    console.log(" responseData:", responseData);
 
     return createResponse(200, responseData);
   } catch (error) {

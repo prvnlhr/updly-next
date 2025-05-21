@@ -1,5 +1,5 @@
 "use client";
-import React from "react";
+import React, { useState } from "react";
 import Image from "next/image";
 import { Icon } from "@iconify/react/dist/iconify.js";
 import { CommunityDetails } from "@/types/communityTypes";
@@ -8,6 +8,9 @@ import Link from "next/link";
 import { votePost } from "@/services/user/postServices";
 import { useSession } from "next-auth/react";
 import { formatDate } from "@/utils/dateFormat";
+import LoadingSpinner from "@/components/Common/LoadingSpinner";
+import { toggleCommunityMembership } from "@/services/user/communityServices";
+import { FeedPost } from "@/types/feedTypes";
 
 interface CommunityPageProps {
   communityDetails: CommunityDetails;
@@ -16,18 +19,108 @@ interface CommunityPageProps {
 const CommunityPage: React.FC<CommunityPageProps> = ({ communityDetails }) => {
   const { data: session } = useSession();
   const user = session?.user;
-  const { community, posts } = communityDetails;
+  const { community } = communityDetails;
+  const [posts, setPosts] = useState(communityDetails.posts);
+  const [isJoining, setIsJoining] = useState(false);
+  const [isMember, setIsMember] = useState(community.isMember || false);
 
-  const currentUserId = user?.id;
-  const handleVote = async (postId: string) => {
+  const handleJoinToggle = async () => {
+    if (!user?.id || isJoining) return;
+
+    setIsJoining(true);
     try {
-      await votePost(currentUserId, postId);
+      const { isMember: newStatus } = await toggleCommunityMembership(
+        user.id,
+        community.id as string
+      );
+      setIsMember(newStatus);
     } catch (error) {
-      console.log(" error:", error);
+      console.error("Failed to toggle community membership:", error);
+    } finally {
+      setIsJoining(false);
     }
   };
 
+  const handleVote = async (postId: string, voteType: "up" | "down") => {
+    console.log("xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx");
+    if (!user?.id) return;
+    const originalPosts = [...posts];
+
+    // Optimistic update
+    setPosts((prevPosts) =>
+      prevPosts.map((post) => {
+        if (post.id !== postId) return post;
+
+        let newVoteStatus: boolean | null;
+        let scoreChange = 0;
+
+        if (post.userVote === null) {
+          // New vote
+          newVoteStatus = voteType === "up";
+          scoreChange = voteType === "up" ? 1 : -1;
+        } else if (
+          (voteType === "up" && post.userVote) ||
+          (voteType === "down" && !post.userVote)
+        ) {
+          // Removing vote
+          newVoteStatus = null;
+          scoreChange = post.userVote ? -1 : 1;
+        } else {
+          // Changing vote
+          newVoteStatus = voteType === "up";
+          scoreChange = voteType === "up" ? 2 : -2;
+        }
+
+        return {
+          ...post,
+          userVote: newVoteStatus,
+          upvotes: post.upvotes + scoreChange,
+        };
+      })
+    );
+
+    try {
+      const result = await votePost({
+        postId,
+        userId: user.id,
+        voteType,
+      });
+
+      if (result.status !== "success") {
+        throw new Error(result.error);
+      }
+    } catch (error) {
+      console.error("Vote failed:", error);
+      // Revert on error
+      setPosts(originalPosts);
+    }
+  };
+
+  const getVoteButtonClass = (post: FeedPost, direction: "up" | "down") => {
+    const baseClass =
+      "h-[100%] aspect-square flex items-center rounded-full justify-center";
+    const activeClass =
+      direction === "up"
+        ? "text-orange-500 hover:bg-orange-500/10"
+        : "text-blue-500 hover:bg-blue-500/10";
+    const inactiveClass = "text-gray-500 hover:bg-gray-300/20";
+
+    if (post.userVote === null) {
+      return `${baseClass} ${inactiveClass}`;
+    }
+
+    if (
+      (direction === "up" && post.userVote) ||
+      (direction === "down" && !post.userVote)
+    ) {
+      return `${baseClass} ${activeClass}`;
+    }
+
+    return `${baseClass} ${inactiveClass}`;
+  };
+
   const date = formatDate(community.createdAt);
+  const isOwner = user?.id === community.ownerId;
 
   return (
     <div className="w-full h-full overflow-y-scroll hide-scrollbar p-[20px]">
@@ -46,22 +139,50 @@ const CommunityPage: React.FC<CommunityPageProps> = ({ communityDetails }) => {
             <Image
               src={community.iconUrl as string}
               fill={true}
-              className="object-contain"
+              className="object-cover"
               alt="c_logo"
             />
           </div>
-          <div className="flex-1 h-[50px] flex items-end px-[20px]">
+          <div className="flex-1 h-[50px] flex items-center px-[20px]">
             <p className="text-[2rem] font-medium">{community.displayName}</p>
-            <Link
-              href={`${`/home/${community.displayName}/submit`}`}
-              className="w-[auto] h-[40px] ml-auto flex items-center border rounded-full px-[10px]"
-            >
-              <Icon
-                icon="ic:round-plus"
-                className="text-[1.2rem] text-gray-400 mr-[5px]"
-              />
-              <p className="text-sm text-gray-400">Create Post</p>
-            </Link>
+
+            <div className="w-auto h-[100%] flex items-center ml-auto">
+              {!isOwner && user && (
+                <button
+                  onClick={handleJoinToggle}
+                  disabled={isJoining}
+                  className={`h-[60%] mr-[10px] px-4 flex items-center justify-center rounded-full text-sm font-medium transition-colors cursor-pointer
+                  ${
+                    isMember
+                      ? "bg-transparent border border-blue-500 text-blue-500 hover:bg-blue-500/10"
+                      : "bg-blue-500 text-white hover:bg-blue-600"
+                  }
+                  ${isJoining ? "opacity-70 cursor-not-allowed" : ""}
+                `}
+                >
+                  {isJoining ? (
+                    <div className="h-[15px] w-[15px] flex items-center justify-center">
+                      <LoadingSpinner />
+                    </div>
+                  ) : isMember ? (
+                    "Joined"
+                  ) : (
+                    "Join"
+                  )}
+                </button>
+              )}
+
+              <Link
+                href={`${`/home/${community.displayName}/submit`}`}
+                className="w-[auto] h-[40px] flex items-center border rounded-full px-[10px]"
+              >
+                <Icon
+                  icon="ic:round-plus"
+                  className="text-[1.2rem] text-gray-400 mr-[5px]"
+                />
+                <p className="text-sm text-gray-400">Create Post</p>
+              </Link>
+            </div>
           </div>
         </div>
       </div>
@@ -70,102 +191,146 @@ const CommunityPage: React.FC<CommunityPageProps> = ({ communityDetails }) => {
       <div className="w-full flex">
         {/* Left Section - Posts (Scrollable) */}
         <section className="w-[70%] pr-5">
-          {posts.map((post, pId) => (
-            <div
-              key={pId}
-              className="w-full h-auto border border-[#212121] mb-5 rounded-[30px] p-[10px]"
-            >
-              {/* Post content */}
-              <div className="w-full h-auto flex flex-col">
-                {/* Post header */}
-                <div className="w-full h-[40px] flex">
-                  <div className="h-full aspect-square border border-[#212121] rounded-full  bg-gray-300/10"></div>
-                  <div className="h-full flex-1 flex items-center px-[10px]">
-                    <p className="text-xs">u/{post.author.username}</p>
-                    <Icon
-                      icon="bi:dot"
-                      className="w-[16px] h-[16px] text-[#A2A8B2]"
-                    />
-                    <p className="text-xs text-[#A2A2A2]">
-                      {formatDate(post.createdAt).formattedDate}
-                    </p>
-                  </div>
-                </div>
+          {posts.map((post) => {
+            const isOwnPost = user?.id === post.author.id;
 
-                {/* Post content body */}
-                <div className="w-full h-auto px-[10px]">
-                  <div className="w-full h-auto py-[5px]">
-                    <p className="text-[1.2rem] font-medium">{post.title}</p>
+            return (
+              <div
+                key={post.id}
+                className="w-full h-auto border border-[#212121] mb-5 rounded-[30px] p-[10px]"
+              >
+                {/* Post content */}
+                <div className="w-full h-auto flex flex-col">
+                  {/* Post header */}
+                  <div className="w-full h-[40px] flex">
+                    <div className="h-full aspect-square border border-[#212121] rounded-full bg-gray-300/10"></div>
+                    <div className="h-full flex-1 flex items-center px-[10px]">
+                      <p className="text-xs">u/{post.author.username}</p>
+                      <Icon
+                        icon="bi:dot"
+                        className="w-[16px] h-[16px] text-[#A2A8B2]"
+                      />
+                      <p className="text-xs text-[#A2A2A2]">
+                        {formatDate(post.createdAt).formattedDate}
+                      </p>
+                    </div>
                   </div>
 
-                  <div className="w-full h-auto py-[10px]">
-                    {post.type === "IMAGE" || post.type === "VIDEO" ? (
-                      <div className="relative w-full h-auto aspect-video rounded-[20px] overflow-hidden">
-                        {post.type === "IMAGE" ? (
-                          <Image
-                            src={post.mediaUrl as string}
-                            alt={`${post.title} image`}
-                            fill
-                            className="object-cover"
-                            sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"
-                          />
-                        ) : (
-                          <video
-                            src={post.url as string}
-                            controls
-                            className="w-full h-full object-cover"
-                          />
-                        )}
+                  {/* Post content body */}
+                  <div className="w-full h-auto px-[10px]">
+                    {post.title && (
+                      <div className="w-full h-auto py-[5px]">
+                        <p className="text-[1.2rem] font-medium">
+                          {post.title}
+                        </p>
                       </div>
-                    ) : post.type === "LINK" ? (
-                      <div className="flex flex-col space-y-2">
-                        <Link
-                          href={post.url as string}
-                          target="_blank"
-                          rel="noopener noreferrer"
-                          className="text-blue-500 hover:underline"
-                        >
-                          {post.url}
-                        </Link>
-                        {post.content && <div>{parse(post.content)}</div>}
-                      </div>
-                    ) : (
-                      <>{parse(post.content)}</>
                     )}
-                  </div>
-                </div>
 
-                {/* Post footer (upvotes/comments) */}
-                <div className="w-full h-[40px] flex items-center">
-                  <div className="w-auto h-[90%] flex items-center rounded-full bg-gray-300/10">
-                    <button
-                      onClick={() => handleVote(post.id)}
-                      className="h-full aspect-square flex items-center hover:bg-gray-300/10 rounded-full justify-center"
-                    >
-                      <Icon icon="bx:upvote" className="w-[15px] h-[15px]" />
-                    </button>
-                    <div className="h-full w-auto px-[5px] text-xs flex items-center justify-center">
-                      {post.upvotes || 0}
+                    <div className="w-full h-auto py-[10px]">
+                      {post.mediaUrl &&
+                        (post.type === "IMAGE" || post.type === "VIDEO") && (
+                          <div className="relative w-full h-auto aspect-video rounded-[20px] overflow-hidden mb-3">
+                            {post.type === "IMAGE" ? (
+                              <Image
+                                src={post.mediaUrl}
+                                alt={`${post.title || "Post"} image`}
+                                fill
+                                className="object-cover"
+                                sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"
+                              />
+                            ) : (
+                              <video
+                                src={post.mediaUrl}
+                                controls
+                                className="w-full h-full object-cover"
+                              />
+                            )}
+                          </div>
+                        )}
+
+                      {post.url && post.type === "LINK" && (
+                        <div className="flex flex-col space-y-2 mb-3">
+                          <Link
+                            href={post.url}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            className="text-blue-500 hover:underline break-all"
+                          >
+                            {post.url}
+                          </Link>
+                        </div>
+                      )}
+
+                      {post.content && (
+                        <div className="prose max-w-none text-sm">
+                          {parse(post.content)}
+                        </div>
+                      )}
                     </div>
-                    <button
-                      onClick={() => handleVote(post.id)}
-                      className="h-full aspect-square flex items-center hover:bg-gray-300/10 rounded-full justify-center"
-                    >
-                      <Icon icon="bx:downvote" className="w-[15px] h-[15px]" />
-                    </button>
                   </div>
-                  <div className="w-auto h-[90%] flex items-center rounded-full bg-gray-300/10 ml-[10px]">
-                    <div className="h-full aspect-square flex items-center hover:bg-gray-300/10 rounded-full justify-center">
-                      <Icon icon="uil:comment" className="w-[15px] h-[15px]" />
+
+                  {/* Post footer (upvotes/comments) */}
+                  <div className="w-full h-[40px] flex items-center">
+                    <div className="w-auto h-[90%] flex items-center rounded-full bg-gray-300/10">
+                      <button
+                        onClick={() => handleVote(post.id, "up")}
+                        disabled={isOwnPost || !user}
+                        className={getVoteButtonClass(post, "up")}
+                        title={
+                          isOwnPost
+                            ? "Can't vote on your own post"
+                            : !user
+                            ? "Login to vote"
+                            : "Upvote"
+                        }
+                      >
+                        <Icon icon="bx:upvote" className="w-[15px] h-[15px]" />
+                      </button>
+                      <div
+                        className={`h-full w-auto px-[5px] text-xs flex items-center justify-center ${
+                          post.userVote === true
+                            ? "text-orange-500"
+                            : post.userVote === false
+                            ? "text-blue-500"
+                            : "text-gray-500"
+                        }`}
+                      >
+                        {post.upvotes}
+                      </div>
+                      <button
+                        onClick={() => handleVote(post.id, "down")}
+                        disabled={isOwnPost || !user}
+                        className={getVoteButtonClass(post, "down")}
+                        title={
+                          isOwnPost
+                            ? "Can't vote on your own post"
+                            : !user
+                            ? "Login to vote"
+                            : "Downvote"
+                        }
+                      >
+                        <Icon
+                          icon="bx:downvote"
+                          className="w-[15px] h-[15px]"
+                        />
+                      </button>
                     </div>
-                    <div className="h-full w-auto text-xs flex items-center justify-start pr-[20px]">
-                      {post._count.comments || 0}
+                    <div className="w-auto h-[90%] flex items-center rounded-full bg-gray-300/10 ml-[10px]">
+                      <div className="h-full aspect-square flex items-center hover:bg-gray-300/10 rounded-full justify-center">
+                        <Icon
+                          icon="uil:comment"
+                          className="w-[15px] h-[15px]"
+                        />
+                      </div>
+                      <div className="h-full w-auto text-xs flex items-center justify-start pr-[20px]">
+                        {post.commentCount || 0}
+                      </div>
                     </div>
                   </div>
                 </div>
               </div>
-            </div>
-          ))}
+            );
+          })}
         </section>
 
         {/* Right Section - Community Info (Sticky and Scrollable) */}

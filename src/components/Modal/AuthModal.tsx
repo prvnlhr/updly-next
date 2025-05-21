@@ -250,7 +250,7 @@ const AuthModal = () => {
             <div id="clerk-captcha" />
             <button
               type="submit"
-              className="w-[100%] h-[40px] flex items-center justify-center bg-gray-400 rounded"
+              className="w-[100%] h-[40px] flex items-center justify-center bg-gray-400 rounded cursor-pointer"
             >
               {isSubmitting ? (
                 <>{mode === "signup" ? "Signing Up..." : "Signing In..."}</>

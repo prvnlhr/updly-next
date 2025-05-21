@@ -8,6 +8,7 @@ import React, { useRef, useState } from "react";
 import useClickOutside from "@/hooks/useClickOutside";
 import LoadingSpinner from "../Common/LoadingSpinner";
 import { useModal } from "@/context/ModalContext";
+import AppLogo from "../Common/AppLogo";
 
 const HeaderBar = () => {
   const [isUserMenuOpen, setIsUserMenuOpen] = useState(false);
@@ -41,7 +42,12 @@ const HeaderBar = () => {
 
   return (
     <div className="w-[100%] h-[60px] flex items-center border-b border-[#212121]">
-      <div className="aspect-square h-[100%]"></div>
+      <Link
+        href={"/home/feed"}
+        className="aspect-square h-[100%] flex items-center justify-center ml-[20px]"
+      >
+        <AppLogo />
+      </Link>
       <div className="flex-1 h-[100%] flex justify-end items-center px-[10px]">
         <div className="flex-1 h-[100%] flex items-center justify-end">
           <SearchBar />
@@ -117,7 +123,7 @@ const HeaderBar = () => {
         ) : (
           <button
             onClick={() => openAuthModal()}
-            className="h-[60%] px-4 flex items-center justify-center bg-blue-500 text-white rounded-full text-sm font-medium hover:bg-blue-600 transition-colors"
+            className="h-[60%] px-4 flex items-center justify-center bg-blue-500 text-white rounded-full text-sm font-medium hover:bg-blue-600 transition-colors cursor-pointer"
           >
             Sign In
           </button>

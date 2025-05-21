@@ -89,7 +89,9 @@ const NavigationSidebar: React.FC<NavigationSidebarProps> = ({
                 />
               </div>
               <div className="flex-1 h-[100%] flex items-center justify-start px-[10px] overflow-hidden">
-                <p className="text-sm truncate">{joinedCommunity.iconUrl}</p>
+                <p className="text-sm truncate">
+                  {joinedCommunity.displayName}
+                </p>
               </div>
             </Link>
           ))}

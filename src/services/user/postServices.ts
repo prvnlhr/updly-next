@@ -1,3 +1,4 @@
+import { revalidatePathHandler } from "@/revalidation";
 import { FeedPost } from "@/types/feedTypes";
 import { uploadToCloudinary } from "@/utils/cloudinaryConfig";
 
@@ -94,31 +95,6 @@ export async function uploadMediaAndCreatePost(
   }
 }
 
-export async function votePost(userId: string, postId: string): Promise<void> {
-  try {
-    const response = await fetch(`${BASE_URL}/api/users/${userId}/votes`, {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-      },
-      body: JSON.stringify({ postId }),
-    });
-
-    const result = await response.json();
-
-    if (!response.ok) {
-      console.error("Vote Post Error:", result.error || result.message);
-      throw new Error(result.error || "Failed to vote on post");
-    }
-
-    return result.data;
-  } catch (error) {
-    console.error("Vote Post Failed:", error);
-    throw error;
-  }
-}
-
-// Alternative version using your exact parameter pattern
 export async function getUserFeed(userId: string): Promise<FeedPost[]> {
   try {
     const response = await fetch(`${BASE_URL}/api/feed/${userId}`, {
@@ -141,3 +117,60 @@ export async function getUserFeed(userId: string): Promise<FeedPost[]> {
     throw error;
   }
 }
+
+interface VotePostParams {
+  postId: string;
+  voteType: "up" | "down";
+  userId: string;
+}
+
+interface VoteResponse {
+  status: "success" | "error";
+  action?: "voted" | "removed";
+  direction?: "up" | "down" | null;
+  newScore?: number;
+  error?: string;
+}
+
+export const votePost = async ({
+  postId,
+  voteType,
+  userId,
+}: VotePostParams): Promise<VoteResponse> => {
+  try {
+    const response = await fetch(`${BASE_URL}/api/posts/${postId}/vote`, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({
+        voteType,
+        userId,
+      }),
+    });
+
+    const result = await response.json();
+
+    if (!response.ok) {
+      console.error("Vote failed:", result.error || result.message);
+      return {
+        status: "error",
+        error: result.error || "Failed to process vote",
+      };
+    }
+
+    await revalidatePathHandler("/home/feed", "layout");
+    return {
+      status: "success",
+      action: result.data.action,
+      direction: result.data.direction,
+      newScore: result.data.newScore,
+    };
+  } catch (error) {
+    console.error("Vote error:", error);
+    return {
+      status: "error",
+      error: "Network error while processing vote",
+    };
+  }
+};
