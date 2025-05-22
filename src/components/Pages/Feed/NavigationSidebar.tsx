@@ -33,6 +33,19 @@ const NavigationSidebar: React.FC<NavigationSidebarProps> = ({
       <div className="w-[80%] h-[90%] flex flex-col overflow-y-scroll hide-scrollbar">
         {/* RECENT VISITED */}
 
+        <div className="w-[100%] h-[auto] flex flex-col border-b border-[#212121] py-[0px]">
+          <Link
+            href={"/home/feed"}
+            className="w-[100%] h-[50px] flex items-center"
+          >
+            <Icon
+              icon="material-symbols:home-rounded"
+              className="w-[20px] h-[20px] mr-[5px]"
+            />
+            <p className="text-[1rem] text-[#A2A8B2]">Home</p>
+          </Link>
+        </div>
+
         <div className="w-[100%] h-[auto] flex flex-col border-b border-[#212121] py-[20px]">
           <div className="w-[100%] h-[50px] flex items-center">
             <p className="text-sm text-[#A2A8B2]">MODERATION</p>

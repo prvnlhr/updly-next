@@ -1,7 +1,7 @@
 "use client";
 import { Icon } from "@iconify/react/dist/iconify.js";
 import Link from "next/link";
-import { useParams } from "next/navigation";
+import { useParams, useRouter } from "next/navigation";
 import SearchBar from "./SearchBar";
 import { useSession, signOut } from "next-auth/react";
 import React, { useRef, useState } from "react";
@@ -16,6 +16,7 @@ const HeaderBar = () => {
   const userMenuRef = useRef<HTMLDivElement>(null);
   const { communityName } = useParams();
   const { openAuthModal } = useModal();
+  const router = useRouter();
 
   const { data: session, status } = useSession();
   const user = session?.user;
@@ -33,13 +34,14 @@ const HeaderBar = () => {
     setIsLoggingOut(true);
     try {
       await signOut({ redirect: false });
+      // Refresh the page after sign out
+      router.refresh();
     } catch (error) {
       console.error("Sign-out error:", error);
     } finally {
       setIsLoggingOut(false);
     }
   };
-
   return (
     <div className="w-[100%] h-[60px] flex items-center border-b border-[#212121]">
       <Link

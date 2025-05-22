@@ -21,6 +21,7 @@ const CommunityPage: React.FC<CommunityPageProps> = ({ communityDetails }) => {
   const user = session?.user;
   const { community } = communityDetails;
   const [posts, setPosts] = useState(communityDetails.posts);
+  console.log(" posts:", posts);
   const [isJoining, setIsJoining] = useState(false);
   const [isMember, setIsMember] = useState(community.isMember || false);
 
@@ -42,7 +43,6 @@ const CommunityPage: React.FC<CommunityPageProps> = ({ communityDetails }) => {
   };
 
   const handleVote = async (postId: string, voteType: "up" | "down") => {
-    console.log("xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx");
     if (!user?.id) return;
     const originalPosts = [...posts];
 
@@ -203,7 +203,9 @@ const CommunityPage: React.FC<CommunityPageProps> = ({ communityDetails }) => {
                 <div className="w-full h-auto flex flex-col">
                   {/* Post header */}
                   <div className="w-full h-[40px] flex">
-                    <div className="h-full aspect-square border border-[#212121] rounded-full bg-gray-300/10"></div>
+                    <div className="h-full aspect-square flex items-center justify-center border border-[#404040] rounded-full bg-gray-300/10">
+                      {post.author.username[0]}
+                    </div>
                     <div className="h-full flex-1 flex items-center px-[10px]">
                       <p className="text-xs">u/{post.author.username}</p>
                       <Icon

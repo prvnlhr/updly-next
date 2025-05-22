@@ -8,6 +8,7 @@ import { z } from "zod";
 import { signUpUser } from "@/services/auth/authServices";
 import { authenticate } from "@/actions/auth/authenticate";
 import { useSession } from "next-auth/react";
+import { useRouter } from "next/navigation";
 
 type AuthMessage = {
   message: string;
@@ -39,6 +40,7 @@ type FormMode = "signin" | "signup";
 const AuthModal = () => {
   const { update } = useSession();
 
+  const router = useRouter();
   const { showAuthModal, closeAuthModal } = useModal();
   const [mode, setMode] = React.useState<FormMode>("signin");
   const [authMessage, setAuthMessage] = React.useState<AuthMessage | null>(
@@ -61,7 +63,6 @@ const AuthModal = () => {
     try {
       if (mode === "signup") {
         const signUpData = data as SignUpFormData;
-        console.log(" signUpData:", signUpData);
         const response = await signUpUser({
           username: signUpData.username,
           email: signUpData.email,
@@ -78,7 +79,6 @@ const AuthModal = () => {
           email: data.email,
           password: data.password,
         });
-        console.log(" result:", result);
 
         if (result.error) {
           setAuthMessage({
@@ -87,7 +87,7 @@ const AuthModal = () => {
           });
         } else {
           await update();
-
+          router.refresh();
           // setAuthMessage({
           //   message: "Signed in successfully!",
           //   type: "success",
