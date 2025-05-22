@@ -1,7 +1,9 @@
 import { FeedPost } from "@/types/feedTypes";
 
 const BASE_URL =
-  process.env.NEXT_PUBLIC_VERCEL_URL || "https://updly-next.vercel.app";
+  process.env.NEXT_PUBLIC_VERCEL_URL ||
+  process.env.API_BASE_URL ||
+  "https://updly-next.vercel.app";
 
 export async function getUserFeed(userId: string): Promise<FeedPost[]> {
   try {
