@@ -112,8 +112,28 @@ const CreatePostPage: React.FC<CreatePostPageProps> = ({
       title: "",
       content: "",
       url: "",
+      media: undefined,
     },
   });
+
+  // Watch the current post type
+  const currentType = watch("type");
+
+  // Reset form when post type changes
+  useEffect(() => {
+    const type = searchParams.get("type") || "text";
+    if (type !== currentType) {
+      reset({
+        type: type as "text" | "image" | "link",
+        title: "",
+        content: "",
+        url: "",
+        media: undefined,
+      });
+      setPreview(null);
+      setError(null);
+    }
+  }, [searchParams, currentType, reset]);
 
   useEffect(() => {
     setSelectedCommunity(communityDetails || defaultCommunity);
@@ -134,6 +154,7 @@ const CreatePostPage: React.FC<CreatePostPageProps> = ({
       document.removeEventListener("mousedown", handleClickOutside);
     };
   }, []);
+
   const fetchCommunities = async (query: string) => {
     setIsLoadingCommunities(true);
     try {
@@ -193,39 +214,33 @@ const CreatePostPage: React.FC<CreatePostPageProps> = ({
       const communityId = selectedCommunity.id as string;
       const userId = user?.id;
 
-      let postData: {
-        title: string;
-        type: "TEXT" | "IMAGE" | "VIDEO" | "LINK";
-        communityId: string;
-        userId: string;
-        content?: string;
-        media?: FileList;
-        url?: string;
-      } = {
+      if (!userId) {
+        throw new Error("User not authenticated");
+      }
+
+      // Validate the correct fields are present based on type
+      if (data.type === "text" && !data.content) {
+        throw new Error("Content is required for text posts");
+      }
+
+      if (data.type === "image" && !data.media) {
+        throw new Error("Media is required for image posts");
+      }
+
+      if (data.type === "link" && !data.url) {
+        throw new Error("URL is required for link posts");
+      }
+
+      const postData = {
         title: data.title,
         type: data.type.toUpperCase() as "TEXT" | "IMAGE" | "VIDEO" | "LINK",
         communityId,
         userId,
+        content: data.content || "",
+        ...(data.type === "image" && { media: data.media as FileList }),
+        ...(data.type === "link" && { url: data.url }),
       };
 
-      if (data.type === "text") {
-        postData = {
-          ...postData,
-          content: data.content,
-        };
-      } else if (data.type === "image") {
-        postData = {
-          ...postData,
-          content: data.content || "",
-          media: data.media as FileList,
-        };
-      } else if (data.type === "link") {
-        postData = {
-          ...postData,
-          content: data.content || "",
-          url: data.url,
-        };
-      }
       await uploadMediaAndCreatePost(postData, communityId, userId);
       reset();
       setPreview(null);
@@ -395,7 +410,7 @@ const CreatePostPage: React.FC<CreatePostPageProps> = ({
               <Link
                 href="?type=text"
                 className={`w-[auto] h-[auto] flex items-center py-[5px] px-[5px] border-b-3 mx-[20px] ${
-                  postType === "text"
+                  currentType === "text"
                     ? "border-[#2E90FA]"
                     : "border-transparent"
                 }`}
@@ -405,7 +420,7 @@ const CreatePostPage: React.FC<CreatePostPageProps> = ({
               <Link
                 href="?type=image"
                 className={`w-[auto] h-[auto] flex items-center py-[5px] px-[5px] border-b-3 mx-[20px] ${
-                  postType === "image"
+                  currentType === "image"
                     ? "border-[#2E90FA]"
                     : "border-transparent"
                 }`}
@@ -415,7 +430,7 @@ const CreatePostPage: React.FC<CreatePostPageProps> = ({
               <Link
                 href="?type=link"
                 className={`w-[auto] h-[auto] flex items-center py-[5px] px-[5px] border-b-3 mx-[20px] ${
-                  postType === "link"
+                  currentType === "link"
                     ? "border-[#2E90FA]"
                     : "border-transparent"
                 }`}
@@ -442,7 +457,7 @@ const CreatePostPage: React.FC<CreatePostPageProps> = ({
             </div>
 
             {/* Image/Video Upload (only for image type) */}
-            {postType === "image" && (
+            {currentType === "image" && (
               <div className="w-[100%] h-auto my-[20px]">
                 <div className="relative w-[100%] h-[200px] border border-[#212121] rounded-[20px] flex items-center justify-center overflow-hidden">
                   {preview ? (
@@ -480,7 +495,7 @@ const CreatePostPage: React.FC<CreatePostPageProps> = ({
             )}
 
             {/* URL Input (only for link type) */}
-            {postType === "link" && (
+            {currentType === "link" && (
               <div className="w-[100%] h-[100px] my-[10px]">
                 <input
                   {...register("url")}
