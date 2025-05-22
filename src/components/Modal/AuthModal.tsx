@@ -41,6 +41,7 @@ const AuthModal = () => {
   const { update } = useSession();
 
   const router = useRouter();
+  const [isDemoSigningIn, setIsDemoSigningIn] = React.useState(false);
   const { showAuthModal, closeAuthModal } = useModal();
   const [mode, setMode] = React.useState<FormMode>("signin");
   const [authMessage, setAuthMessage] = React.useState<AuthMessage | null>(
@@ -57,6 +58,41 @@ const AuthModal = () => {
     mode: "onChange",
   });
 
+  const handleDemoAccountSignIn = async () => {
+    setIsDemoSigningIn(true);
+    setAuthMessage(null);
+
+    const demoCredentials = {
+      email: process.env.NEXT_PUBLIC_DEMO_ACCOUNT_EMAIL!,
+      password: process.env.NEXT_PUBLIC_DEMO_ACCOUNT_PASSWORD!,
+    };
+
+    try {
+      const result = await authenticate({
+        email: demoCredentials.email,
+        password: demoCredentials.password,
+      });
+
+      if (result.error) {
+        setAuthMessage({
+          message: result.error,
+          type: "error",
+        });
+      } else {
+        await update();
+        router.refresh();
+        closeAuthModal();
+      }
+    } catch (error) {
+      console.error("Authentication error:", error);
+      setAuthMessage({
+        message: "Failed to sign in with demo account",
+        type: "error",
+      });
+    } finally {
+      setIsDemoSigningIn(false);
+    }
+  };
   const onSubmit = async (data: SignUpFormData | SignInFormData) => {
     setAuthMessage(null);
 
@@ -88,11 +124,6 @@ const AuthModal = () => {
         } else {
           await update();
           router.refresh();
-          // setAuthMessage({
-          //   message: "Signed in successfully!",
-          //   type: "success",
-          // });
-
           closeAuthModal();
         }
       }
@@ -116,6 +147,7 @@ const AuthModal = () => {
           <p className="text-[1.5rem] text-[gray] font-medium">
             {mode === "signup" ? "Sign Up" : "Sign In"}
           </p>
+
           {mode === "signup" && (
             <p className="text-[0.8rem] text-[gray] font-medium">
               By continuing, you agree to our User Agreement and acknowledge
@@ -246,13 +278,39 @@ const AuthModal = () => {
             )}
           </div>
 
-          <div className="w-[100%] h-[80px] flex flex-col items-center justify-evenly">
+          <div className="w-[100%] h-[100px] flex flex-col items-center justify-evenly">
+            {mode === "signin" && (
+              <button
+                type="button"
+                onClick={handleDemoAccountSignIn}
+                disabled={isSubmitting || isDemoSigningIn}
+                className={`w-auto h-auto px-[10px] py-[5px] mb-[10px] rounded cursor-pointer hover:bg-gray-300/10 border border-blue-400 ${
+                  isSubmitting || isDemoSigningIn
+                    ? "opacity-50 cursor-not-allowed"
+                    : ""
+                }`}
+              >
+                {isDemoSigningIn ? (
+                  "Signing In..."
+                ) : (
+                  <p className="text-sm">
+                    Try the App – Sign In with a Demo Account
+                  </p>
+                )}
+              </button>
+            )}
+
             <div id="clerk-captcha" />
             <button
               type="submit"
-              className="w-[100%] h-[40px] flex items-center justify-center bg-gray-400 rounded cursor-pointer"
+              disabled={isSubmitting || isDemoSigningIn}
+              className={`w-[100%] h-[40px] flex items-center justify-center bg-gray-400 rounded cursor-pointer ${
+                isSubmitting || isDemoSigningIn
+                  ? "opacity-50 cursor-not-allowed"
+                  : ""
+              }`}
             >
-              {isSubmitting ? (
+              {isSubmitting || isDemoSigningIn ? (
                 <>{mode === "signup" ? "Signing Up..." : "Signing In..."}</>
               ) : mode === "signup" ? (
                 "Sign Up"
@@ -260,7 +318,7 @@ const AuthModal = () => {
                 "Sign In"
               )}
             </button>
-            <p className="text-xs">
+            <p className="text-xs mt-[5px]">
               {mode === "signup" ? "Already Signed up?" : "Need an account?"}
               <button
                 type="button"
