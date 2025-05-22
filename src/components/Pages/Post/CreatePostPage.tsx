@@ -56,7 +56,7 @@ const postSchema = z.discriminatedUnion("type", [
 type FormValues = z.infer<typeof postSchema>;
 
 interface CreatePostPageProps {
-  communityDetails: CommunityData | null;
+  communityDetails: CommunityData | undefined;
 }
 
 const defaultCommunity: CommunityData = {

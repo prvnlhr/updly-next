@@ -1,3 +1,4 @@
+import { auth } from "@/auth";
 import CreatePostPage from "@/components/Pages/Post/CreatePostPage";
 import { getCommunityDetails } from "@/services/user/communityServices";
 import { CommunityDetails } from "@/types/communityTypes";
@@ -8,10 +9,12 @@ const page = async ({
 }: {
   params: Promise<{ [key: string]: string }>;
 }) => {
+  const session = await auth();
+  const userId = session?.user.id;
   const { communityName } = await params;
   let communityDetails: CommunityDetails | null = null;
   if (communityName) {
-    communityDetails = await getCommunityDetails(communityName);
+    communityDetails = await getCommunityDetails(communityName, userId);
   }
 
   const community = communityDetails?.community;
