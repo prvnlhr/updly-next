@@ -25,7 +25,7 @@
     "react-dom": "^19.0.0",
     "react-hook-form": "^7.56.3",
     "react-loader-spinner": "^6.1.6",
-    "reactjs-tiptap-editor": "^0.3.2",
+    "reactjs-tiptap-editor": "^0.3.4",
     "zod": "^3.24.4"
   },
   "devDependencies": {
