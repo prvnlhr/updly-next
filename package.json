@@ -18,7 +18,7 @@
     "bcryptjs": "^3.0.2",
     "cloudinary": "^2.6.1",
     "html-react-parser": "^5.2.5",
-    "next": "15.3.2",
+    "next": "15.4.2",
     "next-auth": "^5.0.0-beta.28",
     "next-cloudinary": "^6.16.0",
     "react": "^19.0.0",
